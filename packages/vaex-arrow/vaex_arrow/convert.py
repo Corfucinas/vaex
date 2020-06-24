@@ -42,8 +42,10 @@ def column_from_arrow_array(arrow_array):
             string_bytes = np.array([], dtype='S1')
         else:
             string_bytes = np.frombuffer(string_bytes, 'S1', len(string_bytes))
-        column = ColumnStringArrow(offsets, string_bytes, len(arrow_array), null_bitmap=null_bitmap)
-        return column
+        return ColumnStringArrow(
+            offsets, string_bytes, len(arrow_array), null_bitmap=null_bitmap
+        )
+
     else:
         raise TypeError('type unsupported: %r' % arrow_type)
 

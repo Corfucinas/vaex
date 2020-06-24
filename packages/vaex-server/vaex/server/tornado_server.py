@@ -216,8 +216,7 @@ class WebServer(threading.Thread):
 
     def submit_threaded(self, callable, *args, **kwargs):
         def execute():
-            value = callable(*args, **kwargs)
-            return value
+            return callable(*args, **kwargs)
         future = self.thread_pool.submit(execute)
         return future
 

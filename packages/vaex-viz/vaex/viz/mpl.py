@@ -237,7 +237,7 @@ def scatter(self, x, y, xerr=None, yerr=None, cov=None, corr=None, s_expr=None, 
         sy = self.evaluate(yerr, selection=selection)
         if corr is not None:
             sxy = self.evaluate(corr, selection=selection) * sx * sy
-        elif cov is not None:
+        else:
             sxy = self.evaluate(cov, selection=selection)
         cov_matrix = np.zeros((len(sx), 2, 2))
         cov_matrix[:,0,0] = sx**2
@@ -445,7 +445,8 @@ def plot(self, x=None, y=None, z=None, what="count(*)", vwhat=None, reduce=["col
     # visual: mapping of a plot axis, to a grid axis
     visual_default = dict(x="x", y="y", layer="z", fade="selection", row="subspace", column="what")
 
-    def invert(x): return dict((v, k) for k, v in x.items())
+    def invert(x):
+        return {v: k for k, v in x.items()}
     # visual_default_reverse = invert(visual_default)
     # visual_ = visual_default
     # visual = dict(visual) # copy for modification

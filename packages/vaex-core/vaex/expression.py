@@ -34,10 +34,7 @@ except AttributeError:
 default_shape = 128
 PRINT_MAX_COUNT = 10
 
-expression_namespace = {}
-expression_namespace['nan'] = np.nan
-
-
+expression_namespace = {'nan': np.nan}
 expression_namespace = {}
 expression_namespace['nan'] = np.nan
 
@@ -129,13 +126,13 @@ class Meta(type):
                                 expression = 'str_cat({1}, {0})'.format(a.expression, repr(b))
                             else:
                                 raise ValueError('operand %r not supported for string comparison' % op['code'])
-                            return Expression(self.ds, expression=expression)
                         else:
                             if isinstance(b, Expression):
                                 assert b.ds == a.ds
                                 b = b.expression
                             expression = '({2} {1} {0})'.format(a.expression, op['code'], b)
-                            return Expression(self.ds, expression=expression)
+
+                        return Expression(self.ds, expression=expression)
                     attrs['__r%s__' % op['name']] = f
 
             wrap(op)
@@ -463,8 +460,8 @@ class Expression(with_metaclass(Meta)):
     def _repr_plain_(self):
         from .formatting import _format_value
         def format(values):
-            for i in range(len(values)):
-                value = values[i]
+            for value_ in values:
+                value = value_
                 yield _format_value(value)
         colalign = ("right",) * 2
         try:

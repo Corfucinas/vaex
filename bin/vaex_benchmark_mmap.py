@@ -69,8 +69,8 @@ def sum_read_part(i1, i2):
 import concurrent.futures
 
 def sum_read():
-	total = sum([future.result() for future in vaex.utils.submit_subdivide(9, sum_read_part, length, int(2e5))])
-	return total
+	return sum(future.result() for future in vaex.utils.submit_subdivide(
+	    9, sum_read_part, length, int(2e5)))
 
 #for i in range(3):
 #	print sum_read()
@@ -95,8 +95,8 @@ def sum_mmap_part(i1, i2):
 import concurrent.futures
 
 def sum_mmap():
-	total = sum([future.result() for future in vaex.utils.submit_subdivide(8, sum_mmap_part, length, int(1e6))])
-	return total
+	return sum(future.result() for future in vaex.utils.submit_subdivide(
+	    8, sum_mmap_part, length, int(1e6)))
 
 print "benchmarking sum mmap", sum_mmap(), sum_mmap(), sum_mmap()
 expr = "sum_mmap()"

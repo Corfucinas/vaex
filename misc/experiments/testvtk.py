@@ -268,17 +268,10 @@ class MainWindow:#QtGui.QMainWindow):
 		#painter.drawLine(9, 0, 100, 200)
 		
 	def mousePressEvent(self, event):
-		if 1:
-			self.vtkWidget._original_mousePressEvent(event)
-		else:
-			self.lasso_screen = []
-			self.dragging = True
+		self.vtkWidget._original_mousePressEvent(event)
 			
 	def mouseReleaseEvent(self, event):
-		if 1:
-			self.vtkWidget._original_mouseReleaseEvent(event)
-		else:
-			self.dragging = False
+		self.vtkWidget._original_mouseReleaseEvent(event)
 	def mouseMoveEvent(self, event):
 		if 1:
 			self.vtkWidget._original_mouseMoveEvent(event)

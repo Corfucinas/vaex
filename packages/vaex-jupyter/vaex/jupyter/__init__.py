@@ -58,21 +58,23 @@ class DataFrameAccessorWidget(object):
         if selection is not None:
             selection = selection.copy()
         model = vaex.jupyter.model.DataArray(df=self.df, axes=axes, selection=selection, **kwargs)
-        if shared:
-            grid = self.grid
-        else:
-            grid = vaex.jupyter.model.GridCalculator(self.df, [])
+        grid = self.grid if shared else vaex.jupyter.model.GridCalculator(self.df, [])
         grid.model_add(model)
-        view = vaex.jupyter.view.DataArray(model=model, display_function=display_function)
-        return view
+        return vaex.jupyter.view.DataArray(
+            model=model, display_function=display_function
+        )
 
     def axis_model(self, expression, limits=None):
         return self._axes([expression], limits=[limits])[0]
 
     def _axes(self, expressions, limits):
         limits = self.df.limits(expressions, limits)
-        axes = [vaex.jupyter.model.Axis(df=self.df, expression=expression, min=min, max=max) for expression, (min, max) in zip(expressions, limits)]
-        return axes
+        return [
+            vaex.jupyter.model.Axis(
+                df=self.df, expression=expression, min=min, max=max
+            )
+            for expression, (min, max) in zip(expressions, limits)
+        ]
 
     def histogram(self, x, limits=None, selection=None, selection_interact='default', toolbar=True, shared=False, **kwargs):
         import vaex.jupyter.model
@@ -81,10 +83,7 @@ class DataFrameAccessorWidget(object):
             selection = selection.copy()
         x, = self._axes([x], limits)
         model = vaex.jupyter.model.Histogram(df=self.df, x=x, selection=selection, selection_interact=selection_interact, **kwargs)
-        if shared:
-            grid = self.grid
-        else:
-            grid = vaex.jupyter.model.GridCalculator(self.df, [])
+        grid = self.grid if shared else vaex.jupyter.model.GridCalculator(self.df, [])
         grid.model_add(model)
         viz = vaex.jupyter.view.Histogram(model=model)
         if toolbar:
@@ -96,13 +95,9 @@ class DataFrameAccessorWidget(object):
         import vaex.jupyter.view
         x, = self._axes([x], limits)
         model = vaex.jupyter.model.Histogram(df=self.df, x=x, **kwargs)
-        if shared:
-            grid = self.grid
-        else:
-            grid = vaex.jupyter.model.GridCalculator(self.df, [])
+        grid = self.grid if shared else vaex.jupyter.model.GridCalculator(self.df, [])
         grid.model_add(model)
-        viz = vaex.jupyter.view.PieChart(model=model)
-        return viz
+        return vaex.jupyter.view.PieChart(model=model)
 
     def heatmap(self, x, y, limits=None, selection=None, selection_interact='default', transform='log', toolbar=True, shape=256, shared=False, **kwargs):
         import vaex.jupyter.model
@@ -111,10 +106,7 @@ class DataFrameAccessorWidget(object):
         if selection is not None:
             selection = selection.copy()
         model = vaex.jupyter.model.Heatmap(df=self.df, x=x, y=y, selection=selection, shape=shape, **kwargs)
-        if shared:
-            grid = self.grid
-        else:
-            grid = vaex.jupyter.model.GridCalculator(self.df, [])
+        grid = self.grid if shared else vaex.jupyter.model.GridCalculator(self.df, [])
         self._last_grid = grid
         grid.model_add(model)
         viz = vaex.jupyter.view.Heatmap(model=model, transform=transform)

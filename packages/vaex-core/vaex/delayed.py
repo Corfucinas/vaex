@@ -21,7 +21,7 @@ def promisify(value):
     if isinstance(value, aplus.Promise):
         return value
     if isinstance(value, (list, tuple)):
-        return aplus.listPromise(*list([promisify(k) for k in value]))
+        return aplus.listPromise(*[promisify(k) for k in value])
     else:
         return aplus.Promise.fulfilled(value)
 
@@ -64,7 +64,7 @@ def delayed(f):
 
         def call(_):
             kwargs_real = {key: promise.get() for key, promise in key_promise}
-            args_real = list([promise.get() for promise in arg_promises])
+            args_real = [promise.get() for promise in arg_promises]
             return f(*args_real, **kwargs_real)
 
         def error(exc):

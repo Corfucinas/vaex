@@ -29,14 +29,12 @@ def load_iris():
 
 def _iris(name, iris_previous, N):
     filename = os.path.join(vaex.utils.get_private_dir('data'), name + '.hdf5')
-    if os.path.exists(filename):
-        return vaex.open(filename)
-    else:
+    if not os.path.exists(filename):
         iris = iris_previous()
         repeat = int(np.ceil(N / len(iris)))
         ds = vaex.dataset.DatasetConcatenated([iris] * repeat)
         ds.export_hdf5(filename)
-        return vaex.open(filename)
+    return vaex.open(filename)
 
 
 def iris_subsample(N, error_percentage=5, ds=None):

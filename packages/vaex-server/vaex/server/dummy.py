@@ -33,16 +33,14 @@ class Server:
         self.service = service
 
     def list(self):
-        df_map = self.service.list()
-        return df_map
+        return self.service.list()
 
     def execute(self, df_name, spec_data):
         encoding = Encoding()
         specs = deserialize(spec_data, encoding)
         df = self.service.df_map[df_name]
         tasks = encoding.decode_list('task', specs, df=df)
-        results = self.service.execute(df, tasks)
-        return results
+        return self.service.execute(df, tasks)
 
     def _rmi(self, df, methodname, args, kwargs):
         method = getattr(self.df_map[df.name], methodname)

@@ -40,18 +40,20 @@ class ThreadPoolIndex(concurrent.futures.ThreadPoolExecutor):
         cancelled = False
 
         def wrapped(*args, **kwargs):
-            if not cancelled:
-                if self.nthreads == 1:
-                    self.local.index = 0
-                with self.lock:
-                    if not hasattr(self.local, 'index'):
-                        self.local.index = next(self.thread_indices)
-                if unpack:
-                    args = args[0]  # it's passed as a tuple.. not sure why
-                if self._debug_sleep:
-                    # print("SLEEP", self._debug_sleep)
-                    time.sleep(self._debug_sleep)
-                callable(self.local.index, *args, **kwargs, **kwargs_extra)
+            if cancelled:
+                return
+
+            if self.nthreads == 1:
+                self.local.index = 0
+            with self.lock:
+                if not hasattr(self.local, 'index'):
+                    self.local.index = next(self.thread_indices)
+            if unpack:
+                args = args[0]  # it's passed as a tuple.. not sure why
+            if self._debug_sleep:
+                # print("SLEEP", self._debug_sleep)
+                time.sleep(self._debug_sleep)
+            callable(self.local.index, *args, **kwargs, **kwargs_extra)
         # convert to list so we can count
         values = list(iterator)
         N = len(values)

@@ -111,19 +111,18 @@ class ColumnIndexed(Column):
         :return: A column object which avoids two levels of indirection
         :rtype: ColumnIndexed
         """
-        direct_indices_map = direct_indices_map if direct_indices_map is not None else {}
-        if isinstance(column, ColumnIndexed):
-            if id(column.indices) not in direct_indices_map:
-                direct_indices = column.indices[indices]
-                if masked:
-                    # restored sentinel mask values
-                    direct_indices[indices == -1] = -1
-                direct_indices_map[id(column.indices)] = direct_indices
-            else:
-                direct_indices = direct_indices_map[id(column.indices)]
-            return ColumnIndexed(column.df, direct_indices, column.name, masked=masked or column.masked)
-        else:
+        if not isinstance(column, ColumnIndexed):
             return ColumnIndexed(df, indices, name, masked=masked)
+        direct_indices_map = direct_indices_map if direct_indices_map is not None else {}
+        if id(column.indices) not in direct_indices_map:
+            direct_indices = column.indices[indices]
+            if masked:
+                # restored sentinel mask values
+                direct_indices[indices == -1] = -1
+            direct_indices_map[id(column.indices)] = direct_indices
+        else:
+            direct_indices = direct_indices_map[id(column.indices)]
+        return ColumnIndexed(column.df, direct_indices, column.name, masked=masked or column.masked)
 
     def __len__(self):
         return len(self.indices)
@@ -150,11 +149,9 @@ class ColumnIndexed(Column):
             else:
                 i1, i2 = np.min(indices), np.max(indices)
             ar_unfiltered = ar_unfiltered[i1:i2+1]
+            indices = indices - i1
             if self.masked:
-                indices = indices - i1
                 indices[mask] = -1
-            else:
-                indices = indices - i1
         ar = ar_unfiltered[indices]
         assert not np.ma.isMaskedArray(indices)
         if self.masked:
@@ -165,7 +162,7 @@ class ColumnIndexed(Column):
 
 class ColumnConcatenatedLazy(Column):
     def __init__(self, expressions, dtype=None):
-        self.is_masked = any([e.is_masked for e in expressions])
+        self.is_masked = any(e.is_masked for e in expressions)
         if self.is_masked:
             for expression in expressions:
                 if expression.is_masked:
@@ -182,20 +179,20 @@ class ColumnConcatenatedLazy(Column):
         if dtype is None:
             dtypes = [e.dtype for e in expressions]
 
-            any_strings = any([dtype == str_type for dtype in dtypes])
+            any_strings = str_type in dtypes
             if any_strings:
                 self.dtype = str_type
             else:
                 # np.datetime64/timedelta64 and find_common_type don't mix very well
-                if all([dtype.type == np.datetime64 for dtype in dtypes]):
+                if all(dtype.type == np.datetime64 for dtype in dtypes):
                     self.dtype = dtypes[0]
-                elif all([dtype.type == np.timedelta64 for dtype in dtypes]):
+                elif all(dtype.type == np.timedelta64 for dtype in dtypes):
                     self.dtype = dtypes[0]
                 else:
-                    if all([dtype == dtypes[0] for dtype in dtypes]):  # find common types doesn't always behave well
+                    if all(dtype == dtypes[0] for dtype in dtypes):  # find common types doesn't always behave well
                         self.dtype = dtypes[0]
-                    if  any([dtype.kind in 'SU' for dtype in dtypes]):  # strings are also done manually
-                        if all([dtype.kind in 'SU' for dtype in dtypes]):
+                    if any(dtype.kind in 'SU' for dtype in dtypes):  # strings are also done manually
+                        if all(dtype.kind in 'SU' for dtype in dtypes):
                             index = np.argmax([dtype.itemsize for dtype in dtypes])
                             self.dtype = dtypes[index]
                         else:
@@ -238,8 +235,8 @@ class ColumnConcatenatedLazy(Column):
                 offset += len(self.expressions[i].df)
                 expressions.append(self.expressions[i])
                 i += 1
-            if stop > offset:  # add the tail part
-                expressions.append(self.expressions[i][:stop-offset])
+        if stop > offset:  # add the tail part
+            expressions.append(self.expressions[i][:stop-offset])
         return ColumnConcatenatedLazy(expressions, self.dtype)
 
     def __getitem__(self, slice):

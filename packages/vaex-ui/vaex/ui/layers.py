@@ -442,9 +442,9 @@ class LayerTable(object):
         # self.plot_window.set_range(min, max, dimension=dimension)
         if dimension == 0:
             self.option_xrange.set_value((min, max), update=False)
-        if dimension == 1:
+        elif dimension == 1:
             self.option_yrange.set_value((min, max), update=False)
-        if dimension == 2:
+        elif dimension == 2:
             self.option_zrange.set_value((min, max), update=False)
         # return not was_equal
 
@@ -495,13 +495,12 @@ class LayerTable(object):
         if expression == "":
             expression = None
         widget = self.option_weight_count.combobox
-        if expression:
-            if expression != "*":  # * is special
-                try:
-                    self.dataset.validate_expression(expression)
-                except Exception as e:
-                    self.error_in_field(widget, "weight", e)
-                    return
+        if expression and expression != "*":  # * is special
+            try:
+                self.dataset.validate_expression(expression)
+            except Exception as e:
+                self.error_in_field(widget, "weight", e)
+                return
         self.state.weight_count = expression
         self.plot_window.queue_history_change("changed weight expression to %s" % (expression))
         if widget.currentText() != expression:

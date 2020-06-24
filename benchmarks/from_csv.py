@@ -99,9 +99,7 @@ def test_pandas_read_csv_chunked():
     import pandas as pd
 
     start = datetime.now()
-    n_read = 0
-    for df in pd.read_csv(test_path, chunksize=1_000_000):
-        n_read += len(df)
+    n_read = sum(len(df) for df in pd.read_csv(test_path, chunksize=1_000_000))
     duration = datetime.now() - start
     print('it took {} to read {:,} rows, which is {:,} rows per second'.format(
         duration, n_read, int(n_read / duration.total_seconds())))

@@ -121,9 +121,7 @@ def validate_expression(expr, variable_set, function_set=[], names=None):
         validate_expression(expr.value, variable_set, function_set, names)
     elif isinstance(expr, _ast.Subscript):
         validate_expression(expr.value, variable_set, function_set, names)
-        if isinstance(expr.slice.value, _ast.Num):
-            pass  # numbers are fine
-        else:
+        if not isinstance(expr.slice.value, _ast.Num):
             raise ValueError(
                 "Only subscript/slices with numbers allowed, not: %r" % expr.slice.value)
     else:
@@ -224,14 +222,15 @@ def _dtan(n, args):
 #     a = div(sub(num(1), sqr(args[0])))
     return div(num(1), sqr(call('cos', args=args)))
 
-standard_function_derivatives = {}
-standard_function_derivatives['sin'] = 'cos'
-standard_function_derivatives['cos'] = _dcos
-standard_function_derivatives['tan'] = _dtan
-standard_function_derivatives['log10'] = _dlog10
-standard_function_derivatives['sqrt'] = _dsqrt
-standard_function_derivatives['arctan2'] = _darctan2
-standard_function_derivatives['arccos'] = _darccos
+standard_function_derivatives = {
+    'sin': 'cos',
+    'cos': _dcos,
+    'tan': _dtan,
+    'log10': _dlog10,
+    'sqrt': _dsqrt,
+    'arctan2': _darctan2,
+    'arccos': _darccos,
+}
 
 
 class Derivative(ast.NodeTransformer):
@@ -400,9 +399,12 @@ class SimplifyExpression(ast.NodeTransformer):
 
     def visit_UnaryOp(self, node):
         node.operand = self.visit(node.operand)
-        if isinstance(node.op, ast.USub):
-            if isinstance(node.operand, ast.Num) and node.operand.n == 0:
-                node = node.operand
+        if (
+            isinstance(node.op, ast.USub)
+            and isinstance(node.operand, ast.Num)
+            and node.operand.n == 0
+        ):
+            node = node.operand
         return node
 
     def visit_BinOp(self, node):
@@ -417,9 +419,12 @@ class SimplifyExpression(ast.NodeTransformer):
                 return num(0)
             elif isinstance(left, ast.Num) and left.n == 1:
                 return right
-        if isinstance(node.op, ast.Div):
-            if isinstance(left, ast.Num) and left.n == 0:
-                return num(0)
+        if (
+            isinstance(node.op, ast.Div)
+            and isinstance(left, ast.Num)
+            and left.n == 0
+        ):
+            return num(0)
         if isinstance(node.op, ast.Add):
             if isinstance(right, ast.Num) and right.n == 0:
                 return left

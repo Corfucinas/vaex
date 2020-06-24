@@ -98,4 +98,3 @@ class Client:
             return results
         finally:
             del self._msg_id_to_tasks[msg_id]
-            pass

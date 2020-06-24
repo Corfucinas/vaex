@@ -24,8 +24,13 @@ class ANNOYModel(state.HasState):
     def __call__(self, *args):
         data2d = np.vstack([arg.astype(np.float64) for arg in args]).T.copy()
         result = []
-        for i in range(len(data2d)):
-            result.append(self.index_builder.get_nns_by_vector(n=self.n_neighbours, vector=data2d[i], search_k=self.search_k))
+        for item in data2d:
+            result.append(
+                self.index_builder.get_nns_by_vector(
+                    n=self.n_neighbours, vector=item, search_k=self.search_k
+                )
+            )
+
         return np.array(result)
 
     def fit(self, dataframe):

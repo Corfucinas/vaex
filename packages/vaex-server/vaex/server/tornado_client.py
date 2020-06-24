@@ -74,11 +74,11 @@ class ClientWebsocket(Client):
         self.websocket.close()
 
     def _progress(self, fraction, msg_id):
-        cancel = False
-        for task in self._msg_id_to_tasks.get(msg_id, ()):
-            if any(result is False for result in task.signal_progress.emit(fraction)):
-                cancel = True
-                break
+        cancel = any(
+            any(result is False for result in task.signal_progress.emit(fraction))
+            for task in self._msg_id_to_tasks.get(msg_id, ())
+        )
+
         if cancel:
             for task in self._msg_id_to_tasks.get(msg_id, ()):
                 if not hasattr(task, '_server_side_cancel'):
@@ -127,10 +127,7 @@ class ClientWebsocket(Client):
 
 def connect(url, **kwargs):
     url = urlparse(url)
-    if url.scheme in ["vaex+ws", "ws"]:
-        websocket = True
-    else:
-        websocket = False
+    websocket = True if url.scheme in ["vaex+ws", "ws"] else False
     assert url.scheme in ["ws", "http", "vaex+ws", "vaex+http"]
     port = url.port
     base_path = url.path

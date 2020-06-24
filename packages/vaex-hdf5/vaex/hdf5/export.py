@@ -39,9 +39,8 @@ def export_hdf5_v1(dataset, path, column_names=None, byteorder="=", shuffle=Fals
     :return:
     """
 
-    if selection:
-        if selection == True:  # easier to work with the name
-            selection = "default"
+    if selection and selection == True:  # easier to work with the name
+        selection = "default"
     # first open file using h5py api
     with h5py.File(path, "w") as h5file_output:
 
@@ -119,9 +118,8 @@ def export_hdf5(dataset, path, column_names=None, byteorder="=", shuffle=False, 
     :return:
     """
 
-    if selection:
-        if selection == True:  # easier to work with the name
-            selection = "default"
+    if selection and selection == True:  # easier to work with the name
+        selection = "default"
     # first open file using h5py api
     with h5py.File(path, "w") as h5file_output:
 
@@ -162,11 +160,7 @@ def export_hdf5(dataset, path, column_names=None, byteorder="=", shuffle=False, 
                 # else:
 
                 byte_length = dataset[column_name].str.byte_length().sum(selection=selection)
-                if byte_length > max_int32:
-                    dtype_indices = 'i8'
-                else:
-                    dtype_indices = 'i4'
-
+                dtype_indices = 'i8' if byte_length > max_int32 else 'i4'
                 data_shape = (byte_length, )
                 indices_shape = (N+1, )
 
@@ -184,7 +178,7 @@ def export_hdf5(dataset, path, column_names=None, byteorder="=", shuffle=False, 
                     null_bitmap_array[0] = null_bitmap_array[0]  # make sure the array really exists
 
                 array.attrs["dtype"] = 'str'
-                # TODO: masked support ala arrow?
+                            # TODO: masked support ala arrow?
             else:
                 if dtype.kind in 'mM':
                     array = h5column_output.require_dataset('data', shape=shape, dtype=np.int64)

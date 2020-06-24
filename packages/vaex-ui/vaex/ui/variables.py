@@ -164,7 +164,6 @@ class VariablesTable(QtGui.QWidget):
 
     def on_variable_change(self, *args):
         self.reset()
-        pass
 
     def __init__(self, parent, menu=None):
         super(VariablesTable, self).__init__(parent)

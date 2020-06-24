@@ -58,12 +58,11 @@ class HansMemoryMapped(DatasetMemoryMapped):
 
 		names = "x y z vx vy vz".split()
 
-		if 1:
-			stride = self.formatSize//8
-			#stride1 = self.numberTimes #*self.formatSize/8
-			for i, name in enumerate(names):
-				# TODO: ask Hans for the self.numberTimes-1
-				self.addRank1(name, offset+8*i, length=self.numberParticles+1, length1=self.numberTimes-1, dtype=np.float64, stride=stride, stride1=1)
+		stride = self.formatSize//8
+		#stride1 = self.numberTimes #*self.formatSize/8
+		for i, name in enumerate(names):
+			# TODO: ask Hans for the self.numberTimes-1
+			self.addRank1(name, offset+8*i, length=self.numberParticles+1, length1=self.numberTimes-1, dtype=np.float64, stride=stride, stride1=1)
 
 		if filename_extra is None:
 			basename = os.path.basename(filename)
@@ -89,7 +88,6 @@ class HansMemoryMapped(DatasetMemoryMapped):
 	@classmethod
 	def can_open(cls, path, *args, **kwargs):
 		return os.path.splitext(path)[-1] == ".bin"
-		basename, ext = os.path.splitext(path)
 		#if os.path.exists(basename + ".omega2"):
 		#	return True
 		#return True
@@ -126,9 +124,8 @@ def _try_unit(unit):
 		unit = astropy.units.Unit(unit_mangle)
 	except:
 		pass#logger.exception("could not parse unit: %r", unit)
-	if isinstance(unit, six.string_types):
-		return None
-	elif isinstance(unit, astropy.units.UnrecognizedUnit):
+	if isinstance(unit, six.string_types) or isinstance(
+	    unit, astropy.units.UnrecognizedUnit):
 		return None
 	else:
 		return unit
@@ -367,9 +364,9 @@ class AsciiTable(DatasetMemoryMapped):
 
 		#data = table.array.data
 		for i in range(len(table.dtype)):
-			name = table.dtype.names[i]
 			type = table.dtype[i]
 			if type.kind in ["f", "i"]: # only store float and int
+				name = table.dtype.names[i]
 				#datagroup.create_dataset(name, data=table.array[name].astype(np.float64))
 				#dataset.addMemoryColumn(name, table.array[name].astype(np.float64))
 				self.addColumn(name, array=table[name])
@@ -556,6 +553,7 @@ class DatasetTap(DatasetArrays):
 				#assert len(chunk_data) == start - self.offset
 			if enough:
 				logger.debug("we can skip the query, already have results from previous query")
+			import urllib2
 			while not enough:
 				adql_query = "SELECT {column_name} FROM {table_name} WHERE alpha >= {alpha_min} AND alpha < {alpha_max} ORDER BY alpha ASC"\
 					.format(column_name=self.column_name, table_name=self.tap_dataset.table_name, alpha_min=self.alpha_min, alpha_max=self.alpha_max)
@@ -564,7 +562,6 @@ class DatasetTap(DatasetArrays):
 
 
 				url = self.tap_dataset.tap_url + "/sync?REQUEST=doQuery&LANG=ADQL&MAXREC=10000000&FORMAT=votable&QUERY=" +adql_query.replace(" ", "+")
-				import urllib2
 				response = urllib2.urlopen(url)
 				with open(self.download_file, "w") as f:
 					f.write(response.read())
@@ -576,10 +573,7 @@ class DatasetTap(DatasetArrays):
 				logger.debug("new chunk is of lenght %d", len(data))
 				self.rows_left -= len(data)
 				logger.debug("rows left %d", self.rows_left)
-				if chunk_data is None:
-					chunk_data = data
-				else:
-					chunk_data = np.concatenate([chunk_data, data])
+				chunk_data = data if chunk_data is None else np.concatenate([chunk_data, data])
 				if len(chunk_data) >= required_length:
 					enough = True
 				logger.debug("total chunk is of lenght %d, enough: %s", len(chunk_data), enough)
@@ -677,9 +671,8 @@ class DatasetTap(DatasetArrays):
 			url = urlparse(path)
 		except:
 			return False
-		if url.scheme:
-			if url.scheme.startswith("tap+http"): # will also catch https
-				can_open = True
+		if url.scheme and url.scheme.startswith("tap+http"): # will also catch https
+			can_open = True
 		logger.debug("%r can open: %r"  %(cls.__name__, can_open))
 		return can_open
 

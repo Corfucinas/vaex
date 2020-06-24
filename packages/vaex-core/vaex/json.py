@@ -40,8 +40,7 @@ class DateTime64Serializer:
     @staticmethod
     def decode(data):
         dtype = np.dtype("%s[%s]" % (data['type'], data['data']['unit']))
-        value = np.int64(data['data']['value']).astype(dtype)
-        return value
+        return np.int64(data['data']['value']).astype(dtype)
 
 
 @register
@@ -110,8 +109,12 @@ class OrdererSetSerializer:
     def decode(data):
         clsname = data['type']
         cls = getattr(vaex.hash, clsname)
-        value = cls(dict(data['data']['values']), data['data']['count'], data['data']['nan_count'], data['data']['missing_count'])
-        return value
+        return cls(
+            dict(data['data']['values']),
+            data['data']['count'],
+            data['data']['nan_count'],
+            data['data']['missing_count'],
+        )
 
 
 def encode(obj):

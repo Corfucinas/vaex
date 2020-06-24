@@ -468,11 +468,6 @@ class TestPlotPanel2d(NoTest.TestPlotPanel):
 		QtTest.QTest.mouseClick(self.layer.button_selection_expression, QtCore.Qt.LeftButton)
 		logger.debug("clicked mouse")
 		return
-		self.window._wait()
-		self.assertTrue(self.no_exceptions)
-
-		filename = self.window.plot_to_png()
-		self.compare(filename, get_comparison_image("example_xy_selection_on_x"))
 
 	def test_selection_options(self):
 		self.window.xlabel = "x"

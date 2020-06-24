@@ -39,8 +39,7 @@ def rgba_to_url(rgba):
     data = b64encode(data)
     if py3:
         data = data.decode("ascii")
-    imgurl = "data:image/png;base64," + data + ""
-    return imgurl
+    return "data:image/png;base64," + data + ""
 
 
 pdf_modes = collections.OrderedDict()

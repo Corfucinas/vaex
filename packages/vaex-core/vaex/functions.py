@@ -150,10 +150,7 @@ def fillmissing(ar, value):
     ar = ar if not isinstance(ar, column.Column) else ar.to_numpy()
     mask = ismissing(ar)
     if np.any(mask):
-        if np.ma.isMaskedArray(ar):
-            ar = ar.data.copy()
-        else:
-            ar = ar.copy()
+        ar = ar.data.copy() if np.ma.isMaskedArray(ar) else ar.copy()
         ar[mask] = value
     return ar
 
@@ -184,10 +181,7 @@ def fillna(ar, value):
     ar = ar if not isinstance(ar, column.Column) else ar.to_numpy()
     mask = isna(ar)
     if np.any(mask):
-        if np.ma.isMaskedArray(ar):
-            ar = ar.data.copy()
-        else:
-            ar = ar.copy()
+        ar = ar.data.copy() if np.ma.isMaskedArray(ar) else ar.copy()
         ar[mask] = value
     return ar
 
@@ -197,7 +191,7 @@ def ismissing(x):
     if np.ma.isMaskedArray(x):
         if x.dtype.kind in 'O':
             if x.mask is not None:
-                return (x.data == None) | x.mask
+                return (x.data is None) | x.mask
             else:
                 return (x.data == None)
         else:
@@ -209,8 +203,8 @@ def ismissing(x):
             if mask is None:
                 mask = np.zeros(x.length, dtype=np.bool)
             return mask
-        elif isinstance(x, np.ndarray) and x.dtype.kind in 'O':
-            return x == None
+        elif x.dtype.kind in 'O':
+            return x is None
         else:
             return np.zeros(len(x), dtype=np.bool)
 
@@ -904,8 +898,7 @@ def str_equals(x, y):
         x = _to_string_sequence(x)
     if not isinstance(y, six.string_types):
         y = _to_string_sequence(y)
-    equals_mask = x.equals(y)
-    return equals_mask
+    return x.equals(y)
 
 
 @register_function(scope='str')
@@ -1205,10 +1198,7 @@ def str_get(x, i):
     4
     """
     x = _to_string_sequence(x)
-    if i == -1:
-        sl = x.slice_string_end(-1)
-    else:
-        sl = x.slice_string(i, i+1)
+    sl = x.slice_string_end(-1) if i == -1 else x.slice_string(i, i+1)
     return column.ColumnStringArrow(sl.bytes, sl.indices, sl.length, sl.offset, string_sequence=sl)
 
 @register_function(scope='str')
@@ -1739,8 +1729,7 @@ def str_split(x, pattern=None):  # TODO: support n
         x = x.to_arrow()
     if pattern == '':
         raise ValueError('empty separator')
-    sll = x.split('' if pattern is None else pattern)
-    return sll
+    return x.split('' if pattern is None else pattern)
 
 @register_function(scope='str')
 def str_startswith(x, pat):

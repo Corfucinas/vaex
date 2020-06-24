@@ -111,9 +111,9 @@ class NYCTaxi(object):
         import pandas as pd
         skips = ["store_and_fwd_flag"]
         for i, (input, output) in enumerate(zip(self.filenames, self.filenames_vaex)):
-            date_names = ["tpep_pickup_datetime", "tpep_dropoff_datetime"]
             if not os.path.exists(output) or force:
                 print("Converting %s to %s (%d out of %d)" % (input, output, i + 1, len(self.filenames)))
+                date_names = ["tpep_pickup_datetime", "tpep_dropoff_datetime"]
                 df = pd.read_csv(input, parse_dates=date_names)
 
                 for skip in skips:

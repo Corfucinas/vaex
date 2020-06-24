@@ -174,10 +174,7 @@ class SelectionLasso(Selection):
             previous_mask = df._evaluate_selection_mask(name, i1, i2, selection=self.previous_selection, filter_mask=filter_mask)
         else:
             previous_mask = None
-        if filter_mask is not None:
-            N = filter_mask.astype(np.uint8).sum()
-        else:
-            N = i2 - i1
+        N = filter_mask.astype(np.uint8).sum() if filter_mask is not None else i2 - i1
         current_mask = np.full(N, False)
         x, y = np.array(self.xseq, dtype=np.float64), np.array(self.yseq, dtype=np.float64)
         meanx = x.mean()

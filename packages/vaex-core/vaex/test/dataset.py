@@ -407,7 +407,7 @@ class TestDataset(unittest.TestCase):
 				#with open(fn) as f:
 				#	print(f.read())
 				sep = seperator
-				if seperator == " ":
+				if sep == " ":
 					sep = None
 				if use_header:
 					ds = vx.from_ascii(fn, seperator=sep)
@@ -759,7 +759,7 @@ class TestDataset(unittest.TestCase):
 		assert self.dataset.unit("y") == astropy.units.km/astropy.units.second
 		assert self.dataset.unit("t") == astropy.units.second
 		assert self.dataset.unit("z") == astropy.units.km
-		assert self.dataset.unit("x+y") == None
+		assert self.dataset.unit("x+y") is None
 
 	def test_dtype(self):
 		self.assertEqual(self.dataset.data_type("x"), np.dtype(">f8"))
@@ -1158,8 +1158,7 @@ class TestDataset(unittest.TestCase):
 			dfs = [vx.dataset.DatasetArrays("dataset-%i" % i)  for i in range(N)]
 			for dataset, array in zip(dfs, arrays):
 				dataset.add_column("x", array)
-			dataset_concat = vx.dataset.DatasetConcatenated(dfs, name="dataset_concat")
-			return dataset_concat
+			return vx.dataset.DatasetConcatenated(dfs, name="dataset_concat")
 
 		self.assertEqual(concat(np.float32, np.float64).columns["x"].dtype, np.float64)
 		self.assertEqual(concat(np.float32, np.int64).columns["x"].dtype, np.float64)
@@ -1669,45 +1668,6 @@ class TestDatasetDistributed(TestDatasetRemote):
 		#import pdb
 		#pdb.set_trace()
 		self.assertTrue(all(counts == 1), "counts is %r" % counts)
-		return
-
-		sums = self.dataset("x").histogram([[0,10]], size=10, weight="y")
-		assert(all(sums == self.y))
-
-		self.dataset.select("x < 5")
-		mask = self.x < 5
-
-		counts = self.dataset("x").selected().histogram([[0,10]], size=10)
-		mod_counts = counts * 1.
-		mod_counts[~mask] = 0
-		assert(all(counts == mod_counts))
-
-		mod_sums = self.y * 1.
-		mod_sums[~mask] = 0
-		sums = self.dataset("x").selected().histogram([[0,10]], size=10, weight="y")
-		assert(all(sums == mod_sums))
-
-
-		x = np.array([0, 1, 0, 1])
-		y = np.array([0, 0, 1, 1])
-		dataset = vx.from_arrays(x=x, y=y)
-		counts = dataset("x", "y").histogram([[0.,2.], [0.,2.]], size=2)
-		assert(np.all(counts == 1))
-
-		x = np.array([0, 1, 0, 1, 0, 1, 0, 1])
-		y = np.array([0, 0, 1, 1, 0, 0, 1, 1])
-		z = np.array([0, 0, 0, 0, 1, 1, 1, 1])
-		dataset = vx.from_arrays(x=x, y=y, z=z)
-		counts = dataset("x", "y", "z").histogram([[0.,2.], [0.,2.], [0.,2.]], size=2)
-		assert(np.all(counts == 1))
-
-		x = np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1])
-		y = np.array([0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1])
-		z = np.array([0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1])
-		w = np.array([0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,])
-		dataset = vx.from_arrays(x=x, y=y, z=z, w=w)
-		counts = dataset("x", "y", "z", "w").histogram([[0.,2.], [0.,2.], [0.,2.], [0.,2.]], size=2)
-		assert(np.all(counts == 1))
 		return
 
 #class TestDatasetRemotePlain(TestDatasetRemote):

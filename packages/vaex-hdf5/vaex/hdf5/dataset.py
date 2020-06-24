@@ -49,9 +49,9 @@ def _try_unit(unit):
         unit = astropy.units.Unit(unit_mangle)
     except:
         pass  # logger.exception("could not parse unit: %r", unit)
-    if isinstance(unit, six.string_types):
-        return None
-    elif isinstance(unit, astropy.units.UnrecognizedUnit):
+    if isinstance(unit, six.string_types) or isinstance(
+        unit, astropy.units.UnrecognizedUnit
+    ):
         return None
     else:
         return unit
@@ -100,11 +100,12 @@ class Hdf5MemoryMapped(DatasetMemoryMapped):
                     h5dataset = h5columns[column_name]
                 else:
                     for group in h5columns.values():
-                        if 'type' in group.attrs:
-                            if group.attrs['type'] in ['csr_matrix']: 
-                                for name, column in group.items():
-                                    if name == column_name:
-                                        h5dataset = column
+                        if 'type' in group.attrs and group.attrs['type'] in [
+                            'csr_matrix'
+                        ]: 
+                            for name, column in group.items():
+                                if name == column_name:
+                                    h5dataset = column
                 if h5dataset is None:
                     raise ValueError('column {} not found'.format(column_name))
 
@@ -480,18 +481,13 @@ class Hdf5MemoryMappedGadget(DatasetMemoryMapped):
                         self.addColumn("x", offset, data.shape[0], dtype=data.dtype, stride=3)
                         self.addColumn("y", offset + bytesize, data.shape[0], dtype=data.dtype, stride=3)
                         self.addColumn("z", offset + bytesize * 2, data.shape[0], dtype=data.dtype, stride=3)
-                    elif name == "Velocity":
-                        offset = data.id.get_offset()
-                        self.addColumn("vx", offset, data.shape[0], dtype=data.dtype, stride=3)
-                        self.addColumn("vy", offset + bytesize, data.shape[0], dtype=data.dtype, stride=3)
-                        self.addColumn("vz", offset + bytesize * 2, data.shape[0], dtype=data.dtype, stride=3)
-                    elif name == "Velocities":
+                    elif name in ["Velocity", "Velocities"]:
                         offset = data.id.get_offset()
                         self.addColumn("vx", offset, data.shape[0], dtype=data.dtype, stride=3)
                         self.addColumn("vy", offset + bytesize, data.shape[0], dtype=data.dtype, stride=3)
                         self.addColumn("vz", offset + bytesize * 2, data.shape[0], dtype=data.dtype, stride=3)
                     else:
-                        logger.error("unsupported column: %r of shape %r" % (name, array.shape))
+                        logger.error("unsupported column: %r of shape %r" % (name, shape))
         if "Header" in h5file:
             for name in "Redshift Time_GYR".split():
                 if name in h5file["Header"].attrs:

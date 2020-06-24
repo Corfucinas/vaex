@@ -6,14 +6,12 @@ import base64
 
 def object_pickle(trait_name, value, state_obj):
     binary_data = pickle.dumps(value)
-    data = base64.encodebytes(binary_data).decode('ascii')
-    return data
+    return base64.encodebytes(binary_data).decode('ascii')
 
 
 def object_unpickle(trait_name, data, state_obj):
     binary_data = base64.decodebytes(data.encode('ascii'))
-    value = pickle.loads(binary_data)
-    return value
+    return pickle.loads(binary_data)
 
 
 serialize_pickle = {

@@ -230,11 +230,6 @@ def test_minmax_basics(df):
     np.testing.assert_array_almost_equal(task.get(), [0, 4])
 
     return  # TODO: below fails for remote dataframes
-    np.testing.assert_array_almost_equal(df.minmax("x", selection=None, binby=["x"], limits="minmax", shape=1), [[0, 8]])
-    np.testing.assert_array_almost_equal(df.minmax("x", selection=True, binby=["x"], limits="minmax", shape=1), [[0, 3]])
-
-    np.testing.assert_array_almost_equal(df.minmax("x", selection=None, binby=["x"], limits="minmax", shape=2), [[0, 4], [5, 8]])
-    np.testing.assert_array_almost_equal(df.minmax("x", selection=True, binby=["x"], limits="minmax", shape=2), [[0, 1], [2, 3]])
 
 
 def test_minmax_all_dfs(df):

@@ -83,9 +83,9 @@ class DataFrameAccessorGeo(object):
             df.add_variable(center_name, center)
         if center is not None and center[0] != 0:
             x = "({x} - {center_name}[0])".format(**locals())
-        if center is not None and center[1] != 0:
+        if not (center is None or center[1] == 0):
             y = "({y} - {center_name}[1])".format(**locals())
-        if center is not None and center[2] != 0:
+        if not (center is None or center[2] == 0):
             z = "({z} - {center_name}[2])".format(**locals())
         df.add_virtual_column(distance, "sqrt({x}**2 + {y}**2 + {z}**2)".format(**locals()))
         # df.add_virtual_column(alpha, "((arctan2({y}, {x}) + 2*pi) % (2*pi)){transform}".format(**locals()))
@@ -442,7 +442,7 @@ def geo_inside_polygons(x, y, pxs, pys, any=True):
     N = len(pxs)
     submask = np.zeros(len(x), dtype=np.bool)
     if N > 0:
-        for i in range(0, N):
+        for i in range(N):
             px = as_flat_array(pxs[i], np.float64)
             py = as_flat_array(pys[i], np.float64)
             meanx = px.mean()
@@ -450,10 +450,7 @@ def geo_inside_polygons(x, y, pxs, pys, any=True):
             radius = np.sqrt((meanx - px)**2 + (meany - py)**2).max()
             vaex.vaexfast.pnpoly(px, py, x, y, submask if i > 0 else mask, meanx, meany, radius)
             if i > 0:
-                if any:
-                    mask = mask | submask
-                else:
-                    mask = mask & submask
+                mask = mask | submask if any else mask & submask
     return mask
 
 

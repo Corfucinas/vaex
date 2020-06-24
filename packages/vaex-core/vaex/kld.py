@@ -47,11 +47,10 @@ class KlDivergenceShuffle(object):
 
 def to_disjoined(counts):
     shape = counts.shape
-    assert len(counts.shape) == 2
+    assert len(shape) == 2
     counts_0 = counts.sum(axis=1).reshape((shape[0], 1))
     counts_1 = counts.sum(axis=0).reshape((1, shape[1]))
-    counts_disjoined = counts_0 * counts_1
-    return counts_disjoined
+    return counts_0 * counts_1
 
 
 def kld_shuffled(columns, Ngrid=128, datamins=None, datamaxes=None, offset=1):
@@ -150,10 +149,9 @@ def kld_shuffled_grouped(dataset, range_map, pairs, feedback=None, size_grid=32,
                 # vaex.vaexfast.histogram3d(blocks[0], blocks[1], blocks[2], None, counts_shuffled[index], *(ranges + [2+i,1+i,0]))
             if feedback:
                 wrapper.N_done += len(blocks[0]) * dimension
-                if feedback:
-                    cancel = feedback(wrapper.N_done * 100. / N_total)
-                    if cancel:
-                        raise Exception("cancelled")
+                cancel = feedback(wrapper.N_done * 100. / N_total)
+                if cancel:
+                    raise Exception("cancelled")
 
         for index, pair in zip(list(range(i1, i2)), pairs[i1:i2]):
             logger.debug("add job %r %r" % (index, pair))

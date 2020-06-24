@@ -94,6 +94,5 @@ def _export_table(dataset, column_names=None, byteorder="=", shuffle=False, sele
     if shuffle:
         arrow_arrays.append(arrow_array_from_numpy_array(order_array))
         column_names = column_names + [random_index_column]
-    table = pa.Table.from_arrays(arrow_arrays, column_names)
-    return table
+    return pa.Table.from_arrays(arrow_arrays, column_names)
 

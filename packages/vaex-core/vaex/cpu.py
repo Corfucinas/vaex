@@ -110,16 +110,14 @@ class TaskPartMapReduce(TaskPart):
 
         if not self.ignore_filter:
             selection = self.selection
-            if self.pre_filter:
-                if selection:
+            if selection:
+                if self.pre_filter:
                     selection_mask = self.df.evaluate_selection_mask(selection, i1=i1, i2=i2, cache=True)
-                    blocks = [block[selection_mask] for block in blocks]
-            else:
-                if selection or self.df.filtered:
+                else:
                     selection_mask = self.df.evaluate_selection_mask(selection, i1=i1, i2=i2, cache=True, pre_filtered=False)
                     if filter_mask is not None:
                         selection_mask = selection_mask & filter_mask
-                    blocks = [block[selection_mask] for block in blocks]
+                blocks = [block[selection_mask] for block in blocks]
         if self.info:
             self.values.append(self._map(thread_index, i1, i2, *blocks))
         else:

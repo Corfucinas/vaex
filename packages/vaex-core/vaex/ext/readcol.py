@@ -115,7 +115,7 @@ def readcol(filename,skipline=0,skipafter=0,names=False,fsep=None,twod=True,
     """
     with open(filename,'r') as f:
         f = f.readlines()
-    
+
         null=[f.pop(0) for i in range(skipline)]
 
         commentfilter = make_commentfilter(comment)
@@ -138,16 +138,13 @@ def readcol(filename,skipline=0,skipafter=0,names=False,fsep=None,twod=True,
         else:
             if names or asdict or asStruct:
                 # can specify name line
-                if type(names) == type(1):
-                    nameline = f.pop(names)
-                else:
-                    nameline = f.pop(0)
+                nameline = f.pop(names) if type(names) == type(1) else f.pop(0)
                 if nameline[0]==comment:
                     nameline = nameline[1:]
                 if header_badchars:
                     for c in header_badchars:
                         nameline = nameline.replace(c,' ')
-                nms=list([name.strip() for name in nameline.split(fsep)])
+                nms = [name.strip() for name in nameline.split(fsep)]
 
         null=[f.pop(0) for i in range(skipafter)]
 
@@ -160,7 +157,7 @@ def readcol(filename,skipline=0,skipafter=0,names=False,fsep=None,twod=True,
             fseps = [ fsep for i in range(len(f)) ]
             splitarr = list(map(str.split,fstrip,fseps))
             if removeblanks:
-                for i in range(splitarr.count([''])):
+                for _ in range(splitarr.count([''])):
                     splitarr.remove([''])
 
             splitarr = list(filter(commentfilter,splitarr))
@@ -199,16 +196,16 @@ def readcol(filename,skipline=0,skipafter=0,names=False,fsep=None,twod=True,
             x[x==nullval] = numpy.nan
             x = get_autotype(x)
 
-        if asdict or asStruct:
+        if asdict:
             mydict = OrderedDict(zip(nms,x.T))
             for k,v in mydict.items():
                 mydict[k] = get_autotype(v)
-            if asdict:
-                return mydict
-            elif asRecArray:
-                return Struct(mydict).as_recarray()
-            elif asStruct:
-                return Struct(mydict)
+            return mydict
+        elif asStruct:
+            mydict = OrderedDict(zip(nms,x.T))
+            for k,v in mydict.items():
+                mydict[k] = get_autotype(v)
+            return Struct(mydict)
         elif names and twod:
             return nms,x
         elif names:
@@ -276,9 +273,7 @@ def readff(s,format):
 
     F = numpy.array([0]+format).cumsum()
     bothF = zip(F[:-1],F[1:])
-    strarr = [s[l:u] for l,u in bothF]
-
-    return strarr
+    return [s[l:u] for l,u in bothF]
 
 def make_commentfilter(comment):
     if comment is not None:

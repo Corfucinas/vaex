@@ -148,8 +148,7 @@ class ProgressExecution(object):
         total_fraction = 0
         for task in self.tasks:
             total_fraction += task.progress_fraction
-        fraction = total_fraction / len(self.tasks)
-        return fraction
+        return total_fraction / len(self.tasks)
 
     def finished_tasks(self):
         for task, signal in zip(self.tasks, self._task_signals):
@@ -448,10 +447,7 @@ class RangeOption(object):
         # self.combobox_max.addItems(values)
 
         def wrap_setter(value, update=True):
-            if value is None:
-                vmin, vmax = None, None
-            else:
-                vmin, vmax = value
+            vmin, vmax = (None, None) if value is None else value
             self.combobox_min.blockSignals(True)
             self.combobox_max.blockSignals(True)
             changed = False

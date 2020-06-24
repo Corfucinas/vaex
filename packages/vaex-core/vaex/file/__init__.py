@@ -38,8 +38,7 @@ def open(path, *args, **kwargs):
             dataset_class = class_
             break
     if dataset_class:
-        dataset = dataset_class(path, *args, **kwargs)
-        return dataset
+        return dataset_class(path, *args, **kwargs)
 
 
 def dup(file):

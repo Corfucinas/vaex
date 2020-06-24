@@ -174,14 +174,6 @@ class DatasetSelector(QtGui.QListWidget):
 
     def setBestFraction(self, dataset):
         return
-        Nmax = 1000 * 1000 * 10
-        for fraction in possibleFractions[::-1]:
-            N = len(dataset)
-            if N > Nmax:
-                dataset.set_active_fraction(fraction)
-                logger.debug("set best fraction for dataset %r to %r" % (dataset, fraction))
-            else:
-                break
 
     def is_empty(self):
         return len(self.datasets) == 0
@@ -607,9 +599,9 @@ class DatasetPanel(QtGui.QFrame):
             self.tableview()
 
     def onFractionSet(self):
-        index = self.fractionSlider.value()
-        fraction = possibleFractions[index]
         if self.dataset:
+            index = self.fractionSlider.value()
+            fraction = possibleFractions[index]
             self.dataset.set_active_fraction(fraction)
             self.update_length()
             # self.numberLabel.setText("{:,}".format(len(self.dataset)))
@@ -1051,11 +1043,9 @@ class VaexApp(QtGui.QMainWindow):
             if bytes > psutil.virtual_memory().available:
                 if bytes < (psutil.virtual_memory().available + psutil.swap_memory().free):
                     text = "Action requires %s, you have enough swap memory available but it will make your computer slower, do you want to continue?" % (vaex.utils.filesize_format(bytes),)
-                    return confirm(self, "Memory usage issue", text)
                 else:
                     text = "Action requires %s, you do not have enough swap memory available, do you want try anyway?" % (vaex.utils.filesize_format(bytes),)
-                    return confirm(self, "Memory usage issue", text)
-
+                return confirm(self, "Memory usage issue", text)
             return True
         for level in [20, 25, 27, 29, 30, 31, 32]:
             N = 2**level
@@ -1247,7 +1237,7 @@ class VaexApp(QtGui.QMainWindow):
 
     def select(self, *args):
         args = list(args)  # copy since we will modify it
-        if len(args) == 0:
+        if not args:
             print("select requires at least one argument")
             return
         index = args.pop(0)
@@ -1255,7 +1245,7 @@ class VaexApp(QtGui.QMainWindow):
             print("window index %d out of range [%d, %d]" % (index, 0, len(self.windows) - 1))
         else:
             current.window = self.windows[index]
-            if len(args) > 0:
+            if args:
                 layer_index = args.pop(0)
                 current.window.select_layer(layer_index)
                 current.layer = current.window.current_layer
@@ -1568,10 +1558,7 @@ class VaexApp(QtGui.QMainWindow):
             endian_option = ["=", "<", ">"][index]
             logger.debug("export endian: %r", endian_option)
 
-        if type == "hdf5":
-            filename = dialogs.get_path_save(self, "Save to HDF5", name, "HDF5 *.hdf5")
-        else:
-            filename = dialogs.get_path_save(self, "Save to col-fits", name, "FITS (*.fits)")
+        filename = dialogs.get_path_save(self, "Save to HDF5", name, "HDF5 *.hdf5")
         logger.debug("export to file: %r", filename)
         # print args
         filename = str(filename)
@@ -1579,10 +1566,7 @@ class VaexApp(QtGui.QMainWindow):
             filename += "." + type
         if filename:
             with dialogs.ProgressExecution(self, "Copying data...", "Abort export") as progress_dialog:
-                if type == "hdf5":
-                    vaex.export.export_hdf5(dataset, filename, column_names=selected_column_names, shuffle=shuffle, selection=export_selection, byteorder=endian_option, progress=progress_dialog.progress)
-                if type == "fits":
-                    vaex.export.export_fits(dataset, filename, column_names=selected_column_names, shuffle=shuffle, selection=export_selection, progress=progress_dialog.progress)
+                vaex.export.export_hdf5(dataset, filename, column_names=selected_column_names, shuffle=shuffle, selection=export_selection, byteorder=endian_option, progress=progress_dialog.progress)
         logger.debug("export done")
 
     def gadgethdf5(self, filename):
@@ -1636,9 +1620,7 @@ class VaexApp(QtGui.QMainWindow):
 
     def add_recently_opened(self, path):
         # vaex.recent[""]
-        if path.startswith("http") or path.startswith("ws"):
-            pass
-        else:  # non url's will be converted to an absolute path
+        if not (path.startswith("http") or path.startswith("ws")):  # non url's will be converted to an absolute path
             path = os.path.abspath(path)
         while path in self.recently_opened:
             self.recently_opened.remove(path)
@@ -1876,8 +1858,7 @@ class VaexApp(QtGui.QMainWindow):
         if self.samp is None:
             self.onSampConnect()
         dataset = self.dataset_panel.dataset
-        params = {"rows": str(dataset._length), "columns": {}}
-        params['id'] = dataset.filename
+        params = {"rows": str(dataset._length), "columns": {}, 'id': dataset.filename}
         type_map = {np.float64: "F8_LE", np.float32: "F4_LE", np.int64: "I8_LE", np.int32: "I4_LE", np.uint64: "U8_LE", np.uint32: "U4_LE"}
         print(type_map)
         for column_name in dataset.column_names:
@@ -1932,14 +1913,6 @@ class VaexApp(QtGui.QMainWindow):
     def closeEvent(self, event):
         # print("close event")
         return
-        reply = QtGui.QMessageBox.question(self, 'Message',
-                                           "Are you sure to quit?", QtGui.QMessageBox.Yes |
-                                           QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-
-        if reply == QtGui.QMessageBox.Yes:
-            event.accept()
-        else:
-            event.ignore()
 
     def clean_up(self):
         print("clean up")

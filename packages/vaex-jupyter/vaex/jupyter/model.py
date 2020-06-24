@@ -42,9 +42,8 @@ class _HasState(traitlets.HasTraits):
         return self._current_status_wait_future
 
     def _error(self, e):
-        if self._debug:
-            if self._current_status_wait_future:
-                self._current_status_wait_future.set_exception(e)
+        if self._debug and self._current_status_wait_future:
+            self._current_status_wait_future.set_exception(e)
         if isinstance(e, asyncio.CancelledError):
             print("cancelled")
         else:
@@ -76,7 +75,6 @@ class _HasState(traitlets.HasTraits):
         if current_status == self.status:
             self.status = new_status
         else:
-            pass
             raise asyncio.CancelledError(f"Status expected to be {current_status}, but is {self.status}")
         logger.debug(f'State change {type(self)} from {self.status} to {new_status}')
         self.status = new_status
@@ -353,7 +351,7 @@ class DataArray(_HasState):
 
     @property
     def has_missing_limits(self):
-        return any([axis.has_missing_limit for axis in self.axes])
+        return any(axis.has_missing_limit for axis in self.axes)
 
     def on_progress_grid(self, f):
         return all(self.signal_grid_progress.emit(f))
@@ -563,4 +561,6 @@ class GridCalculator(_HasState):
         self._continue_calculation = False
 
     def progress(self, f):
-        return self._continue_calculation and all([model.on_progress_grid(f) for model in self.models])
+        return self._continue_calculation and all(
+            model.on_progress_grid(f) for model in self.models
+        )

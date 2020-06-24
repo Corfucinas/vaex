@@ -165,10 +165,7 @@ def open(path, convert=False, shuffle=False, copy_index=False, *args, **kwargs):
         else:
             import vaex.file
             import glob
-            if isinstance(path, str):
-                paths = [path]
-            else:
-                paths = path
+            paths = [path] if isinstance(path, str) else path
             filenames = []
             for path in paths:
                 # TODO: can we do glob with s3?
@@ -178,7 +175,7 @@ def open(path, convert=False, shuffle=False, copy_index=False, *args, **kwargs):
                     # sort to get predictable behaviour (useful for testing)
                     filenames.extend(list(sorted(glob.glob(path))))
             ds = None
-            if len(filenames) == 0:
+            if not filenames:
                 raise IOError('Could not open file: {}, it does not exist'.format(path))
             filename_hdf5 = _convert_name(filenames, shuffle=shuffle)
             filename_hdf5_noshuffle = _convert_name(filenames, shuffle=False)
@@ -339,11 +336,9 @@ def from_arrays(**arrays):
     from .column import Column
     df = vaex.dataframe.DataFrameArrays("array")
     for name, array in arrays.items():
-        if isinstance(array, Column):
-            df.add_column(name, array)
-        else:
+        if not isinstance(array, Column):
             array = np.asanyarray(array)
-            df.add_column(name, array)
+        df.add_column(name, array)
     return df
 
 def from_arrow_table(table):
@@ -588,28 +583,28 @@ def read_csv_and_convert(path, shuffle=False, copy_index=False, **kwargs):
         filename_hdf5 = _convert_name(filenames, shuffle=shuffle)
         filename_hdf5_noshuffle = _convert_name(filenames, shuffle=False)
         if not os.path.exists(filename_hdf5):
-            if not os.path.exists(filename_hdf5_noshuffle):
+            if os.path.exists(filename_hdf5_noshuffle):
+                ds = open(filename_hdf5_noshuffle)
+            else:
                 # with ProcessPoolExecutor() as executor:
                 # executor.submit(read_csv_and_convert, filenames, shuffle=shuffle, **kwargs)
                 for filename in filenames:
                     read_csv_and_convert(filename, shuffle=shuffle, copy_index=copy_index, **kwargs)
                 ds = open_many([_convert_name(k, shuffle=shuffle) for k in filenames])
-            else:
-                ds = open(filename_hdf5_noshuffle)
             ds.export_hdf5(filename_hdf5, shuffle=shuffle)
-        return open(filename_hdf5)
     else:
         filename = filenames[0]
         filename_hdf5 = _convert_name(filename, shuffle=shuffle)
         filename_hdf5_noshuffle = _convert_name(filename, shuffle=False)
         if not os.path.exists(filename_hdf5):
-            if not os.path.exists(filename_hdf5_noshuffle):
+            if os.path.exists(filename_hdf5_noshuffle):
+                ds = open(filename_hdf5_noshuffle)
+            else:
                 df = pd.read_csv(filename, **kwargs)
                 ds = from_pandas(df, copy_index=copy_index)
-            else:
-                ds = open(filename_hdf5_noshuffle)
             ds.export_hdf5(filename_hdf5, shuffle=shuffle)
-        return open(filename_hdf5)
+
+    return open(filename_hdf5)
 
 
 aliases = vaex.settings.main.auto_store_dict("aliases")
@@ -797,8 +792,7 @@ def concat(dfs):
 
     :rtype: DataFrame
     '''
-    ds = reduce((lambda x, y: x.concat(y)), dfs)
-    return ds
+    return reduce((lambda x, y: x.concat(y)), dfs)
 
 def vrange(start, stop, step=1, dtype='f8'):
     """Creates a virtual column which is the equivalent of numpy.arange, but uses 0 memory"""

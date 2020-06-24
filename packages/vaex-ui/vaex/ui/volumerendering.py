@@ -1343,9 +1343,9 @@ class VolumeRenderWidget(QtOpenGL.QGLWidget):
         dx = x - self.mouse_x
         dy = y - self.mouse_y
 
-        speed = 1.
         speed_mod = 0.1 / 5. / 5.
         if self.mouse_button_down:
+            speed = 1.
             self.angle2 += dx * speed
             self.angle1 += dy * speed
             print(self.angle1, self.angle2)
@@ -1354,7 +1354,10 @@ class VolumeRenderWidget(QtOpenGL.QGLWidget):
                 self.min_level += dx * speed_mod / 10.
                 self.max_level += -dy * speed_mod / 10.
                 print("mod1/2", self.min_level, self.max_level)
-            if (QtGui.QApplication.keyboardModifiers() == QtCore.Qt.AltModifier) or (QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ControlModifier):
+            if QtGui.QApplication.keyboardModifiers() in [
+                QtCore.Qt.AltModifier,
+                QtCore.Qt.ControlModifier,
+            ]:
                 self.mod3 += dx * speed_mod
                 self.mod4 += -dy * speed_mod
                 print("mod3/4", self.mod3, self.mod4)
@@ -1400,11 +1403,6 @@ class VolumeRenderWidget(QtOpenGL.QGLWidget):
                 for i in range(3):
                     subdata[:, :, i] = rgba[:, :, i]
                 subdata[:, :, 3] = (intensity_normalized[zindex] * 255).astype(np.uint8)
-                if 0:
-                    filename = "cube%03d.png" % zindex
-                    img = PIL.Image.frombuffer("RGB", (128, 128), subdata[:, :, 0:3] * 1)
-                    print("saving to", filename)
-                    img.save(filename)
         img = PIL.Image.frombuffer("RGBA", (128 * 16, 128 * 8), data)
         filename = "cube.png"
         print("saving to", filename)

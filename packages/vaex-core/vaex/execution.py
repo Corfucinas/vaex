@@ -29,7 +29,9 @@ class Run:
             raise ValueError("All tasks need to be pre_filter'ed or not pre_filter'ed, it cannot be mixed")
         if self.pre_filter and not self.df.filtered:
             raise ValueError("Requested pre_filter for task while DataFrame is not filtered")
-        self.expressions = list(set(expression for task in tasks for expression in task.expressions_all))
+        self.expressions = list(
+            {expression for task in tasks for expression in task.expressions_all}
+        )
 
 
 class Executor:
@@ -57,8 +59,8 @@ class Executor:
         # (which currently means all tasks for 1 dataframe) and drop them from the
         # list of tasks
         with self.lock:
-            dfs = list(set(task.df for task in self.tasks))
-            if len(dfs) == 0:
+            dfs = list({task.df for task in self.tasks})
+            if not dfs:
                 return []
             else:
                 df = dfs[0]
@@ -150,22 +152,18 @@ class ExecutorLocal(Executor):
                     parts = list(parts)[::-1]
                 if self.zigzag:
                     self.zig = not self.zig
-                async for element in self.thread_pool.map_async(self.process_part, parts,
-                                                    progress=lambda p: all(self.signal_progress.emit(p)) and
-                                                    all([all(task.signal_progress.emit(p)) for task in tasks]) and
-                                                    all([not task.cancelled for task in tasks]),
-                                                    cancel=lambda: self._cancel(run), unpack=True, run=run):
+                async for _ in self.thread_pool.map_async(self.process_part, parts, progress=lambda p: all(self.signal_progress.emit(p)) and all(all(task.signal_progress.emit(p)) for task in tasks) and all(not task.cancelled for task in tasks), cancel=lambda: self._cancel(run), unpack=True, run=run):
                     pass  # just eat all element
                 logger.debug("executing took %r seconds" % (time.time() - t0))
                 logger.debug("cancelled: %r", cancelled)
                 if self.local.cancelled:
                     logger.debug("execution aborted")
+                    cancelled = True
                     for task in tasks:
                         task.reject(UserAbort("cancelled"))
                         # remove references
                         task._result = None
                         task._results = None
-                        cancelled = True
                 else:
                     for task in tasks:
                         logger.debug("fulfill task: %r", task)
@@ -192,24 +190,25 @@ class ExecutorLocal(Executor):
             self.local.executing = False
 
     def process_part(self, thread_index, i1, i2, run):
-        if not run.cancelled:
-            if thread_index >= len(run.block_scopes):
-                raise ValueError(f'thread_index={thread_index} while only having {len(run.block_scopes)} blocks')
-            block_scope = run.block_scopes[thread_index]
-            block_scope.move(i1, i2)
-            df = run.df
-            if run.pre_filter:
-                filter_mask = df.evaluate_selection_mask(None, i1=i1, i2=i2, cache=True)
-            else:
-                filter_mask = None
-            block_scope.mask = filter_mask
-            block_dict = {expression: block_scope.evaluate(expression) for expression in run.expressions}
-            for task in run.tasks:
+        if run.cancelled:
+            return
+        if thread_index >= len(run.block_scopes):
+            raise ValueError(f'thread_index={thread_index} while only having {len(run.block_scopes)} blocks')
+        block_scope = run.block_scopes[thread_index]
+        block_scope.move(i1, i2)
+        df = run.df
+        if run.pre_filter:
+            filter_mask = df.evaluate_selection_mask(None, i1=i1, i2=i2, cache=True)
+        else:
+            filter_mask = None
+        block_scope.mask = filter_mask
+        block_dict = {expression: block_scope.evaluate(expression) for expression in run.expressions}
+        for task in run.tasks:
+            if not run.cancelled:
                 blocks = [block_dict[expression] for expression in task.expressions_all]
-                if not run.cancelled:
-                    try:
-                        task._parts[thread_index].process(thread_index, i1, i2, filter_mask, *blocks)
-                    except Exception as e:
-                        task.reject(e)
-                        run.cancelled = True
-                        raise
+                try:
+                    task._parts[thread_index].process(thread_index, i1, i2, filter_mask, *blocks)
+                except Exception as e:
+                    task.reject(e)
+                    run.cancelled = True
+                    raise

@@ -99,19 +99,21 @@ def get_main_executor():
 from .expression import Expression
 
 
-_doc_snippets = {}
-_doc_snippets["expression"] = "expression or list of expressions, e.g. df.x, 'x', or ['x, 'y']"
-_doc_snippets["expression_one"] = "expression in the form of a string, e.g. 'x' or 'x+y' or vaex expression object, e.g. df.x or df.x+df.y "
-_doc_snippets["expression_single"] = "if previous argument is not a list, this argument should be given"
-_doc_snippets["binby"] = "List of expressions for constructing a binned grid"
-_doc_snippets["limits"] = """description for the min and max values for the expressions, e.g. 'minmax' (default), '99.7%', [0, 10], or a list of, e.g. [[0, 10], [0, 20], 'minmax']"""
-_doc_snippets["shape"] = """shape for the array where the statistic is calculated on, if only an integer is given, it is used for all dimensions, e.g. shape=128, shape=[128, 256]"""
-_doc_snippets["percentile_limits"] = """description for the min and max values to use for the cumulative histogram, should currently only be 'minmax'"""
-_doc_snippets["percentile_shape"] = """shape for the array where the cumulative histogram is calculated on, integer type"""
-_doc_snippets["selection"] = """Name of selection to use (or True for the 'default'), or all the data (when selection is None or False), or a list of selections"""
-_doc_snippets["selection1"] = """Name of selection to use (or True for the 'default'), or all the data (when selection is None or False)"""
-_doc_snippets["delay"] = """Do not return the result, but a proxy for delayhronous calculations (currently only for internal use)"""
-_doc_snippets["progress"] = """A callable that takes one argument (a floating point value between 0 and 1) indicating the progress, calculations are cancelled when this callable returns False"""
+_doc_snippets = {
+    "expression": "expression or list of expressions, e.g. df.x, 'x', or ['x, 'y']",
+    "expression_one": "expression in the form of a string, e.g. 'x' or 'x+y' or vaex expression object, e.g. df.x or df.x+df.y ",
+    "expression_single": "if previous argument is not a list, this argument should be given",
+    "binby": "List of expressions for constructing a binned grid",
+    "limits": """description for the min and max values for the expressions, e.g. 'minmax' (default), '99.7%', [0, 10], or a list of, e.g. [[0, 10], [0, 20], 'minmax']""",
+    "shape": """shape for the array where the statistic is calculated on, if only an integer is given, it is used for all dimensions, e.g. shape=128, shape=[128, 256]""",
+    "percentile_limits": """description for the min and max values to use for the cumulative histogram, should currently only be 'minmax'""",
+    "percentile_shape": """shape for the array where the cumulative histogram is calculated on, integer type""",
+    "selection": """Name of selection to use (or True for the 'default'), or all the data (when selection is None or False), or a list of selections""",
+    "selection1": """Name of selection to use (or True for the 'default'), or all the data (when selection is None or False)""",
+    "delay": """Do not return the result, but a proxy for delayhronous calculations (currently only for internal use)""",
+    "progress": """A callable that takes one argument (a floating point value between 0 and 1) indicating the progress, calculations are cancelled when this callable returns False""",
+}
+
 _doc_snippets["expression_limits"] = _doc_snippets["expression"]
 _doc_snippets["grid"] = """If grid is given, instead if compuation a statistic given by what, use this Nd-numpy array instead, this is often useful when a custom computation/statistic is calculated, but you still want to use the plotting machinery."""
 _doc_snippets["edges"] = """Currently for internal use only (it includes nan's and values outside the limits at borders, nan and 0, smaller than at 1, and larger at -1"""
@@ -358,10 +360,7 @@ class DataFrame(object):
         """
         assert arguments is not None, 'for now, you need to supply arguments'
         import types
-        if isinstance(f, types.LambdaType):
-            name = 'lambda_function'
-        else:
-            name = f.__name__
+        name = 'lambda_function' if isinstance(f, types.LambdaType) else f.__name__
         if not vectorize:
             f = vaex.expression.FunctionToScalar(f)
         lazy_function = self.add_function(name, f, unique=True)
@@ -582,7 +581,7 @@ class DataFrame(object):
             if sort:
                 mi_list = np.array(mi_list)
                 indices = np.argsort(mi_list)[::-1]
-                sorted_x = list([x[k] for k in indices])
+                sorted_x = [x[k] for k in indices]
                 return mi_list[indices], sorted_x
             else:
                 return np.array(vaex.utils.unlistify(waslist, mi_list))
@@ -740,8 +739,7 @@ class DataFrame(object):
         progressbar.add_task(task, "count for %s" % expression)
         @delayed
         def finish(counts):
-            counts = np.array(counts)
-            return counts
+            return np.array(counts)
         return finish(task)
 
     @docsubst
@@ -1015,8 +1013,7 @@ class DataFrame(object):
 
         @delayed
         def finish(covars):
-            value = np.array(vaex.utils.unlistify(waslist, covars))
-            return value
+            return np.array(vaex.utils.unlistify(waslist, covars))
         return self._delay(delay, finish(delayed_list(covars)))
 
     @docsubst
@@ -1084,10 +1081,9 @@ class DataFrame(object):
             if sort:
                 correlations = np.array(correlations)
                 indices = np.argsort(sort_key(correlations) if sort_key else correlations)[::-1]
-                sorted_x = list([x[k] for k in indices])
+                sorted_x = [x[k] for k in indices]
                 return correlations[indices], sorted_x
-            value = np.array(vaex.utils.unlistify(waslist, correlations))
-            return value
+            return np.array(vaex.utils.unlistify(waslist, correlations))
         return self._delay(delay, finish(delayed_list(correlations)))
 
     @docsubst
@@ -1166,8 +1162,7 @@ class DataFrame(object):
             sums = sums.reshape(shape)
             with np.errstate(divide='ignore', invalid='ignore'):
                 moments2 = sums / counts
-            cov_matrix = moments2 - meansxy
-            return cov_matrix
+            return moments2 - meansxy
         progressbar = vaex.utils.progressbars(progress)
         values = calculate(expressions, limits)
         cov_matrix = finish(values)
@@ -1447,8 +1442,7 @@ class DataFrame(object):
 
         @delayed
         def finish2(grid):
-            value = vaex.utils.unlistify(waslist, np.array(grid))
-            return value
+            return vaex.utils.unlistify(waslist, np.array(grid))
         return self._delay(delay, finish2(result))
 
     def _use_delay(self, delay):
@@ -1733,9 +1727,11 @@ class DataFrame(object):
         """
         # if binby is None:
         import healpy as hp
-        if healpix_expression is None:
-            if self.ucds.get("source_id", None) == 'meta.id;meta.main':  # we now assume we have gaia data
-                healpix_expression = "source_id/34359738368"
+        if (
+            healpix_expression is None
+            and self.ucds.get("source_id", None) == 'meta.id;meta.main'
+        ):  # we now assume we have gaia data
+            healpix_expression = "source_id/34359738368"
 
         if healpix_expression is None:
             raise ValueError("no healpix_expression given, and was unable to guess")
@@ -1806,7 +1802,6 @@ class DataFrame(object):
             # grid[np.isnan(grid)] = np.nanmean(grid)
             grid = hp.smoothing(grid, sigma=np.radians(smooth))
         fgrid = f(grid)
-        coord_map = dict(equatorial='C', galactic='G', ecliptic="E")
         fig = plt.gcf()
         if figsize is not None:
             fig.set_size_inches(*figsize)
@@ -1816,6 +1811,7 @@ class DataFrame(object):
         f = hp.mollzoom if interactive else hp.mollview
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
+            coord_map = dict(equatorial='C', galactic='G', ecliptic="E")
             coord = coord_map[healpix_input], coord_map[healpix_output]
             if coord_map[healpix_input] == coord_map[healpix_output]:
                 coord = None
@@ -1967,9 +1963,8 @@ class DataFrame(object):
         return self.byte_size()
 
     def _shape_of(self, expression, filtered=True, check_alias=True):
-        if check_alias:
-            if str(expression) in self._column_aliases:
-                expression = self._column_aliases[str(expression)]  # translate the alias name into the real name
+        if check_alias and str(expression) in self._column_aliases:
+            expression = self._column_aliases[str(expression)]  # translate the alias name into the real name
         sample = self.evaluate(expression, 0, 1, filtered=False, internal=True, parallel=False)
         rows = len(self) if filtered else self.length_unfiltered()
         return (rows,) + sample.shape[1:]
@@ -1977,9 +1972,8 @@ class DataFrame(object):
     def data_type(self, expression, internal=False, check_alias=True):
         """Return the numpy dtype for the given expression, if not a column, the first row will be evaluated to get the dtype."""
         expression = _ensure_string_from_expression(expression)
-        if check_alias:
-            if expression in self._column_aliases:
-                expression = self._column_aliases[expression]  # translate the alias name into the real name
+        if check_alias and expression in self._column_aliases:
+            expression = self._column_aliases[expression]  # translate the alias name into the real name
         if expression in self._dtypes_override:
             return self._dtypes_override[expression]
         if expression in self.variables:
@@ -1997,10 +1991,8 @@ class DataFrame(object):
             except:
                 data = self.evaluate(expression, 0, 1, filtered=True, internal=True, parallel=False)
             dtype = data.dtype
-        if not internal:
-            if dtype != str_type:
-                if dtype.kind in 'US':
-                    return str_type
+        if not internal and dtype != str_type and dtype.kind in 'US':
+            return str_type
         return dtype
 
     @property
@@ -2790,10 +2782,7 @@ class DataFrame(object):
             column_names = column_names + [index_name]
 
         def create_pdf(data):
-            if index_name is not None:
-                index = data.pop(index_name)
-            else:
-                index = None
+            index = data.pop(index_name) if index_name is not None else None
             df = pd.DataFrame(data=data, index=index)
             if index is not None:
                 df.index.name = index_name
@@ -2844,21 +2833,15 @@ class DataFrame(object):
         :return: astropy.table.Table object
         """
         from astropy.table import Table, Column, MaskedColumn
-        meta = dict()
-        meta["name"] = self.name
-        meta["description"] = self.description
-
+        meta = {"name": self.name, "description": self.description}
         table = Table(meta=meta)
         for name, data in self.to_items(column_names=column_names, selection=selection, strings=strings, virtual=virtual, parallel=parallel):
             if self.data_type(name) == str_type:  # for astropy we convert it to unicode, it seems to ignore object type
                 data = np.array(data).astype('U')
-            meta = dict()
+            meta = {}
             if name in self.ucds:
                 meta["ucd"] = self.ucds[name]
-            if np.ma.isMaskedArray(data):
-                cls = MaskedColumn
-            else:
-                cls = Column
+            cls = MaskedColumn if np.ma.isMaskedArray(data) else Column
             table[name] = cls(data, unit=self.unit(name), description=self.descriptions.get(name), meta=meta)
         return table
 
@@ -2965,7 +2948,7 @@ class DataFrame(object):
                                 return True
                             try:
                                 # a way to detect NaN's and NaT
-                                return not (k == k)
+                                return k != k
                             except ValueError:
                                 # if a value is an array, this will fail, and it is a non-missing
                                 return False
@@ -3024,10 +3007,7 @@ class DataFrame(object):
         :param nest: Nested healpix (default) or ring.
         """
         import healpy as hp
-        if degrees:
-            scale = "*pi/180"
-        else:
-            scale = ""
+        scale = "*pi/180" if degrees else ""
         # TODO: multithread this
         phi = self.evaluate("(%s)%s" % (longitude, scale))
         theta = self.evaluate("pi/2-(%s)%s" % (latitude, scale))
@@ -3169,9 +3149,11 @@ class DataFrame(object):
             for j in range(m):
                 for k in range(n):
                     for l in range(n):
-                        if jacobian[i][k].expression == '0' or jacobian[j][l].expression == '0' or cov_matrix[k][l].expression == '0':
-                            pass
-                        else:
+                        if (
+                            jacobian[i][k].expression != '0'
+                            and jacobian[j][l].expression != '0'
+                            and cov_matrix[k][l].expression != '0'
+                        ):
                             cov_matrix_out[i][j] = cov_matrix_out[i][j] + jacobian[i][k] * cov_matrix[k][l] * jacobian[j][l]
         for i in range(m):
             for j in range(i + 1):
@@ -3265,9 +3247,8 @@ class DataFrame(object):
         :param str unique: if name is already used, make it unique by adding a postfix, e.g. _1, or _2
         """
         type = "change" if name in self.virtual_columns else "add"
-        if isinstance(expression, Expression):
-            if expression.df is not self:
-                expression = expression.copy(self)
+        if isinstance(expression, Expression) and expression.df is not self:
+            expression = expression.copy(self)
         column_position = len(self.column_names)
         # if the current name is an existing column name....
         real_name = self._column_aliases.get(name, name)
@@ -3326,7 +3307,10 @@ class DataFrame(object):
                     d[new] = d[old]
                     del d[old]
         for key, value in self.selection_histories.items():
-            self.selection_histories[key] = list([k if k is None else k._rename(self, old, new) for k in value])
+            self.selection_histories[key] = [
+                k if k is None else k._rename(self, old, new) for k in value
+            ]
+
         if not is_variable:
             if new not in self.virtual_columns:
                 self._renamed_columns.append((old, new))
@@ -3371,8 +3355,8 @@ class DataFrame(object):
             name = vaex.utils.find_valid_name(name, used=[] if not unique else existing_names)
             self.variables[name] = expression
             self.signal_variable_changed.emit(self, name, "add")
-            if unique:
-                return name
+        if unique:
+            return name
 
     def delete_variable(self, name):
         """Deletes a variable from a DataFrame."""
@@ -3769,9 +3753,7 @@ class DataFrame(object):
                 return False
             if not strings and (self.data_type(name) == str_type or self.data_type(name).type == np.string_):
                 return False
-            if not hidden and name.startswith('__'):
-                return False
-            return True
+            return bool(hidden or not name.startswith('__'))
         if hidden and virtual and regex is None and not alias:
             return list(self.column_names)  # quick path
         if not hidden and virtual and regex is None and not alias:
@@ -4408,9 +4390,7 @@ class DataFrame(object):
         """
 
         # Computing the properties of the ellipse prior to selection
-        if radians:
-            pass
-        else:
+        if not radians:
             alpha = np.deg2rad(angle)
         xr = width / 2
         yr = height / 2
@@ -4640,10 +4620,7 @@ class DataFrame(object):
         Note: this does not check if the column is used in a virtual expression or in the filter\
             and may lead to issues. It is safer to use :meth:`drop`.
         '''
-        if isinstance(item, Expression):
-            name = item.expression
-        else:
-            name = item
+        name = item.expression if isinstance(item, Expression) else item
         if name in self.columns:
             del self.columns[name]
             self.column_names.remove(name)
@@ -4701,10 +4678,9 @@ class DataFrame(object):
             expression = self._expr(column)
             depending_columns |= expression.variables()
         depending_columns -= set(columns)
-        if check_filter:
-            if self.filtered:
-                selection = self.get_selection(FILTER_SELECTION_NAME)
-                depending_columns |= selection._depending_columns(self)
+        if check_filter and self.filtered:
+            selection = self.get_selection(FILTER_SELECTION_NAME)
+            depending_columns |= selection._depending_columns(self)
         return depending_columns
 
     def iterrows(self):
@@ -4904,10 +4880,8 @@ class DataFrameLocal(DataFrame):
             if labels is None:
                 N = int(vmax + 1)
                 labels = list(range(vmin, vmax+1))
-                min_value = vmin
-            else:
-                min_value = vmin
-            if (vmax - vmin) >= len(labels):
+            min_value = vmin
+            if vmax - min_value >= len(labels):
                 raise ValueError('value of {} found, which is larger than number of labels {}'.format(vmax, len(labels)))
         df._categories[column] = dict(labels=labels, N=len(labels), min_value=min_value)
         return df
@@ -5187,7 +5161,7 @@ class DataFrameLocal(DataFrame):
     @property
     def _dtype(self):
         dtypes = [self[k].dtype for k in self.get_column_names()]
-        if not all([dtypes[0] == dtype for dtype in dtypes]):
+        if any(dtypes[0] != dtype for dtype in dtypes):
             return ValueError("Not all dtypes are equal: %r" % dtypes)
         return dtypes[0]
 
@@ -5210,9 +5184,11 @@ class DataFrameLocal(DataFrame):
         chunks = []
         column_names = self.get_column_names(strings=False)
         for name in column_names:
-            if not np.can_cast(self.data_type(name), dtype):
-                if self.data_type(name) != dtype:
-                    raise ValueError("Cannot cast %r (of type %r) to %r" % (name, self.data_type(name), dtype))
+            if (
+                not np.can_cast(self.data_type(name), dtype)
+                and self.data_type(name) != dtype
+            ):
+                raise ValueError("Cannot cast %r (of type %r) to %r" % (name, self.data_type(name), dtype))
         chunks = self.evaluate(column_names, parallel=parallel)
         if any(np.ma.isMaskedArray(chunk) for chunk in chunks):
             return np.ma.array(chunks, dtype=dtype).T
@@ -5224,10 +5200,7 @@ class DataFrameLocal(DataFrame):
         """Join the columns of the other DataFrame to this one, assuming the ordering is the same"""
         assert len(self) == len(other), "does not make sense to horizontally stack DataFrames with different lengths"
         for name in other.get_column_names():
-            if prefix:
-                new_name = prefix + name
-            else:
-                new_name = name
+            new_name = prefix + name if prefix else name
             self.add_column(new_name, other.columns[name])
 
     def concat(self, other):
@@ -5280,8 +5253,8 @@ class DataFrameLocal(DataFrame):
                 offset_unfiltered = unfiltered_i2
                 offset_filtered += count
             else:
-                for block_index in range(len(block)):
-                    if block[block_index]:  # if not filtered, we go to the next index
+                for item_ in block:
+                    if item_:  # if not filtered, we go to the next index
                         if i1 <= offset_filtered < i2:  # if this is in the range we want...
                             indices.append(offset_unfiltered)
                         offset_filtered += 1
@@ -5303,8 +5276,10 @@ class DataFrameLocal(DataFrame):
         if self.filtered:
             full_mask = self._selection_masks[FILTER_SELECTION_NAME]
             # TODO: python 3, use yield from
-            for item in vaex.utils.subdivide_mask(full_mask, max_length=chunk_size, logical_length=logical_length):
-                yield item
+            yield from vaex.utils.subdivide_mask(
+                full_mask, max_length=chunk_size, logical_length=logical_length
+            )
+
         else:
             for i1, i2 in vaex.utils.subdivide(logical_length, max_length=chunk_size):
                 yield i1, i2, i1, i2
@@ -5383,28 +5358,26 @@ class DataFrameLocal(DataFrame):
 
             df.map_reduce(assign, lambda *_: None, expressions, ignore_filter=False, selection=selection, pre_filter=use_filter, info=True, to_numpy=False)
             def finalize_result(expression):
-                if expression in chunks_map:
-                    # put all chunks in order
-                    chunks = [chunk for (i1, chunk) in sorted(chunks_map[expression].items(), key=lambda i1_and_chunk: i1_and_chunk[0])]
-                    assert len(chunks) > 0
-                    if len(chunks) == 1:
+                if expression not in chunks_map:
+                    return arrays[expression]
+                # put all chunks in order
+                chunks = [chunk for (i1, chunk) in sorted(chunks_map[expression].items(), key=lambda i1_and_chunk: i1_and_chunk[0])]
+                assert len(chunks) > 0
+                if len(chunks) == 1:
                         # TODO: For NEP Branch
                         # return pa.array(chunks[0])
-                        if internal:
-                            return chunks[0]
-                        else:
-                            values = to_numpy(chunks[0])
-                            return values
+                    if internal:
+                        return chunks[0]
                     else:
-                        # TODO: For NEP Branch
-                        # return pa.chunked_array(chunks)
-                        if internal:
-                            return chunks  # Returns a list of StringArrays
-                        else:
-                            # if isinstance(value, ColumnString) and not internal:
-                            return np.concatenate([to_numpy(k) for k in chunks])
+                        return to_numpy(chunks[0])
                 else:
-                    return arrays[expression]
+                    # TODO: For NEP Branch
+                    # return pa.chunked_array(chunks)
+                    if internal:
+                        return chunks  # Returns a list of StringArrays
+                    else:
+                        # if isinstance(value, ColumnString) and not internal:
+                        return np.concatenate([to_numpy(k) for k in chunks])
             result = [finalize_result(k) for k in expressions]
             if not was_list:
                 result = result[0]
@@ -5508,10 +5481,7 @@ class DataFrameLocal(DataFrame):
                             ar = ar.copy()
                             ar[mask] = np.nan
                         if ar.dtype.kind in "SU":
-                            if hasattr(ar, "mask"):
-                                data = ar.data
-                            else:
-                                data = ar
+                            data = ar.data if hasattr(ar, "mask") else ar
                             values = [value.strip() for value in data.tolist()]
                             if hasattr(ar, "mask"):
                                 ar = np.ma.masked_array(values, ar.mask)
@@ -6025,9 +5995,22 @@ class DataFrameConcatenated(DataFrameLocal):
 
 
 def _is_dtype_ok(dtype):
-    return dtype.type in [np.bool_, np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
-                          np.uint32, np.uint64, np.float32, np.float64, np.datetime64] or\
-        dtype.type == np.string_ or dtype.type == np.unicode_
+    return dtype.type in [
+        np.bool_,
+        np.int8,
+        np.int16,
+        np.int32,
+        np.int64,
+        np.uint8,
+        np.uint16,
+        np.uint32,
+        np.uint64,
+        np.float32,
+        np.float64,
+        np.datetime64,
+        np.string_,
+        np.unicode_,
+    ]
 
 
 def _is_array_type_ok(array):

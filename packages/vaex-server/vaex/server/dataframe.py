@@ -51,9 +51,8 @@ class DataFrameRemote(DataFrame):
         return df
 
     def trim(self, inplace=False):
-        df = self if inplace else self.copy()
         # can we get away with not trimming?
-        return df
+        return self if inplace else self.copy()
 
     @_rmi
     def _evaluate_implementation(self, *args, **kwargs):

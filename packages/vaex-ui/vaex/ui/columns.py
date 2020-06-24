@@ -46,10 +46,10 @@ class ColumnsTableModel(QtCore.QAbstractTableModel):
         column_name = self.get_dataset_column_names()[row]
         property = self.table_column_names[column_index]
         # print index, value, role
-        if property == "Visible":
-            logger.debug("set visibility to: %s", value == QtCore.Qt.Checked)
         if property == "Description":
             self.dataset.descriptions[column_name] = value
+        elif property == "Visible":
+            logger.debug("set visibility to: %s", value == QtCore.Qt.Checked)
         if property == "UCD":
             self.dataset.ucds[column_name] = value
             # TODO: move to dataset class
@@ -169,7 +169,6 @@ class ColumnsTable(QtGui.QWidget):
 
     def on_column_change(self, *args):
         self.reset()
-        pass
 
     def __init__(self, parent, menu=None):
         super(ColumnsTable, self).__init__(parent)
@@ -436,12 +435,6 @@ def add_cartesian(parent, dataset, galactic=True):
         values = dialog.get()
     if values:
         pos = "pos.galactocentric" if galactic else "pos.heliocentric"
-        if 0:
-            units = dataset.unit(values["distance"])
-            if units:
-                dataset.units[values["x"]] = units
-                dataset.units[values["y"]] = units
-                dataset.units[values["z"]] = units
         dataset.ucds[values["x"]] = "pos.cartesian.x;%s" % pos
         dataset.ucds[values["y"]] = "pos.cartesian.y;%s" % pos
         dataset.ucds[values["z"]] = "pos.cartesian.z;%s" % pos
@@ -489,12 +482,6 @@ def add_cartesian_velocities(parent, dataset, galactic=True):
         values = dialog.get()
     if values:
         pos = "pos.galactocentric" if galactic else "pos.heliocentric"
-        if 0:
-            units = dataset.unit(values["distance"])
-            if units:
-                dataset.units[values["x"]] = units
-                dataset.units[values["y"]] = units
-                dataset.units[values["z"]] = units
         dataset.ucds[values["vx"]] = "phys.veloc;pos.cartesian.x;%s" % pos
         dataset.ucds[values["vy"]] = "phys.veloc;pos.cartesian.y;%s" % pos
         dataset.ucds[values["vz"]] = "phys.veloc;pos.cartesian.z;%s" % pos
@@ -521,10 +508,7 @@ default_solar_velocity = "(10., 220+5.2, 7.2)"
 
 
 def add_sky(parent, dataset, galactic=True):
-    if galactic:
-        pos = "pos.galactocentric"
-    else:
-        pos = "pos.heliocentric"
+    pos = "pos.galactocentric" if galactic else "pos.heliocentric"
     cartesian = [dataset.ucd_find(["pos.cartesian.x;%s" % pos]), dataset.ucd_find(["pos.cartesian.y;%s" % pos]),
                  dataset.ucd_find(["pos.cartesian.z;%s" % pos])]
     column_names = dataset.get_column_names(virtual=True)

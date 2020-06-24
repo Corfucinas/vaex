@@ -172,8 +172,7 @@ def single_table(username=None, password=None):
     import requests
 
     done = False
-    table = fetch_votable(url, username, password)
-    return table
+    return fetch_votable(url, username, password)
     # while not done:
     # r = requests.get()
     # tempdir = tempfile.mkdtemp()

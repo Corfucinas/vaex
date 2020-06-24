@@ -389,12 +389,12 @@ class PlotDialog(QtGui.QWidget):
             first_layer = self.layers[0]
             if axis == 0:
                 expr = first_layer.x
-            if axis == 1:
+            elif axis == 1:
                 if self.dimensions > 1:
                     expr = first_layer.y
                 else:
                     return first_layer.amplitude_label()
-            if axis == 2:
+            elif axis == 2:
                 expr = first_layer.z
             label = expr
             unit = first_layer.dataset.unit(expr)
@@ -435,13 +435,13 @@ class PlotDialog(QtGui.QWidget):
     def get_progress_fraction(self):
         total_fraction = 0
         updating_layers = [layer for layer in self.layers]  # if layer.tasks]
-        total_fraction = sum([layer.get_progress_fraction() for layer in updating_layers])
+        total_fraction = sum(layer.get_progress_fraction() for layer in updating_layers)
         return total_fraction / len(updating_layers)
 
     def slice_none(self):
-        mask = np.ones((self.state.grid_size,) * self.dimensions, dtype=np.bool)
         layer = self.current_layer
         if layer:
+            mask = np.ones((self.state.grid_size,) * self.dimensions, dtype=np.bool)
             layer.signal_slice_change.emit(mask, False)
 
     def slice_circle(self, x, y, radius):
@@ -618,32 +618,31 @@ class PlotDialog(QtGui.QWidget):
             self.queue_redraw()
 
     def event(self, event):
-        if isinstance(event, QtGui.QGestureEvent):
-            for gesture in event.activeGestures():
-                if isinstance(gesture, QtGui.QPinchGesture):
-                    center = gesture.centerPoint()
-                    x, y = center.x(), center.y()
-                    geometry = self.canvas.geometry()
-                    if geometry.contains(x, y):
-                        rx = x - geometry.x()
-                        ry = y - geometry.y()
-                        # print self.canvas.geometry, self.canvas.mouse_grabber
-                        axes_list = [ax for ax in self.getAxesList() if ax.contains_point((rx, geometry.height() - 1 - ry))]
-                        # nx, ny = rx/geometry.width(), y/geometry.height()
-                        if len(axes_list) > 0:
-                            axes = axes_list[0]
-                            transform = axes.transData.inverted().transform
-                            x_data, y_data = transform([rx, geometry.height() - 1 - ry])
-                            if gesture.lastScaleFactor() != 0:
-                                scale = (gesture.scaleFactor() / gesture.lastScaleFactor())
-                            else:
-                                scale = (gesture.scaleFactor())
-                            # @scale = gesture.totalScaleFactor()
-                            scale = 1. / (scale)
-                            self.zoom(scale, axes, x_data, y_data)
-            return True
-        else:
+        if not isinstance(event, QtGui.QGestureEvent):
             return super(PlotDialog, self).event(event)
+        for gesture in event.activeGestures():
+            if isinstance(gesture, QtGui.QPinchGesture):
+                center = gesture.centerPoint()
+                x, y = center.x(), center.y()
+                geometry = self.canvas.geometry()
+                if geometry.contains(x, y):
+                    rx = x - geometry.x()
+                    ry = y - geometry.y()
+                    # print self.canvas.geometry, self.canvas.mouse_grabber
+                    axes_list = [ax for ax in self.getAxesList() if ax.contains_point((rx, geometry.height() - 1 - ry))]
+                        # nx, ny = rx/geometry.width(), y/geometry.height()
+                    if axes_list:
+                        axes = axes_list[0]
+                        transform = axes.transData.inverted().transform
+                        x_data, y_data = transform([rx, geometry.height() - 1 - ry])
+                        if gesture.lastScaleFactor() != 0:
+                            scale = (gesture.scaleFactor() / gesture.lastScaleFactor())
+                        else:
+                            scale = (gesture.scaleFactor())
+                        # @scale = gesture.totalScaleFactor()
+                        scale = 1. / (scale)
+                        self.zoom(scale, axes, x_data, y_data)
+        return True
             # return True
 
     def closeEvent(self, event):
@@ -1193,7 +1192,7 @@ class PlotDialog(QtGui.QWidget):
         timelog("begin computation", reset=True)
         # this can be
         promises = [layer.add_tasks_ranges() for layer in layers]
-        executors = list(set([layer.dataset.executor for layer in layers]))
+        executors = list({layer.dataset.executor for layer in layers})
         # execute may do things delay, like at a server
         try:
             for executor in executors:
@@ -1224,8 +1223,8 @@ class PlotDialog(QtGui.QWidget):
 
         for dimension in range(self.dimensions):
             if self.state.ranges_viewport[dimension] is None:
-                vmin = min([layer.state.ranges_grid[dimension][0] for layer in layers])
-                vmax = max([layer.state.ranges_grid[dimension][1] for layer in layers])
+                vmin = min(layer.state.ranges_grid[dimension][0] for layer in layers)
+                vmax = max(layer.state.ranges_grid[dimension][1] for layer in layers)
                 self.state.ranges_viewport[dimension] = [vmin, vmax]
 
         logger.debug("ranges before aspect check: %r", self.state.ranges_viewport)
@@ -1239,7 +1238,7 @@ class PlotDialog(QtGui.QWidget):
 
         # now we are ready to calculate histograms
         promises = [layer.add_tasks_histograms() for layer in layers]
-        executors = list(set([layer.dataset.executor for layer in layers]))
+        executors = list({layer.dataset.executor for layer in layers})
         for executor in executors:
             executor.execute()
 
@@ -1313,8 +1312,8 @@ class PlotDialog(QtGui.QWidget):
         if layers:
             for layer in layers:
                 logger.debug("layer %r has range_level %r" % (layer, layer.range_level))
-            vmin = min([layer.range_level[0] for layer in layers])
-            vmax = max([layer.range_level[1] for layer in layers])
+            vmin = min(layer.range_level[0] for layer in layers)
+            vmax = max(layer.range_level[1] for layer in layers)
             self.state.range_level_show = [vmin, vmax]
         logger.debug("range_level_show = %r" % (self.state.range_level_show, ))
 
@@ -1448,11 +1447,6 @@ class PlotDialog(QtGui.QWidget):
         self.fig.savefig(self.filename_figure_last)
 
     def get_aspect(self):
-        if 0:
-            xmin, xmax = self.axes.get_xlim()
-            ymin, ymax = self.axes.get_ylim()
-            height = ymax - ymin
-            width = xmax - xmin
         return 1  # width/height
 
     def onActionAspectLockOne(self, *ignore_args):
@@ -1482,8 +1476,11 @@ class PlotDialog(QtGui.QWidget):
                 yesall = False
 
                 optionsname = os.path.join(dir_path, name + "_meta.json")
-                options = {}
-                options["extent"] = list(self.current_layer.state.ranges_grid[0]) + list(self.current_layer.state.ranges_grid[1])
+                options = {
+                    "extent": list(self.current_layer.state.ranges_grid[0])
+                    + list(self.current_layer.state.ranges_grid[1])
+                }
+
                 with open(optionsname, "w") as f:
                     json.dump(options, f, indent=4)
                 msg_list.append("wrote: " + optionsname)
@@ -1497,26 +1494,24 @@ class PlotDialog(QtGui.QWidget):
                     if yes or yesall:
                         np.save(gridname, self.current_layer.amplitude_grid)
                         msg_list.append("wrote: " + gridname)
-                if mask[1]:
-                    if self.current_layer.dataset.mask is not None:
-                        gridname = os.path.join(dir_path, name + "_grid_selection.npy")
-                        if not os.path.exists(gridname) or yesall:
-                            yes, yesall = True, yesall
-                        else:
-                            yes, yesall = dialog_confirm(self, "Overwrite", "Overwrite: " + gridname, to_all=True)
-                        if yes or yesall:
-                            np.save(gridname, self.current_layer.amplitude_selection)
-                            msg_list.append("wrote: " + gridname)
-                if mask[2]:
-                    if hasattr(self.current_layer, "vector_grids"):
-                        gridname = os.path.join(dir_path, name + "_grid_vector.npy")
-                        if not os.path.exists(gridname) or yesall:
-                            yes, yesall = True, yesall
-                        else:
-                            yes, yesall = dialog_confirm(self, "Overwrite", "Overwrite: " + gridname, to_all=True)
-                        if yes or yesall:
-                            np.save(gridname, self.current_layer.vector_grids)
-                            msg_list.append("wrote: " + gridname)
+                if mask[1] and self.current_layer.dataset.mask is not None:
+                    gridname = os.path.join(dir_path, name + "_grid_selection.npy")
+                    if not os.path.exists(gridname) or yesall:
+                        yes, yesall = True, yesall
+                    else:
+                        yes, yesall = dialog_confirm(self, "Overwrite", "Overwrite: " + gridname, to_all=True)
+                    if yes or yesall:
+                        np.save(gridname, self.current_layer.amplitude_selection)
+                        msg_list.append("wrote: " + gridname)
+                if mask[2] and hasattr(self.current_layer, "vector_grids"):
+                    gridname = os.path.join(dir_path, name + "_grid_vector.npy")
+                    if not os.path.exists(gridname) or yesall:
+                        yes, yesall = True, yesall
+                    else:
+                        yes, yesall = dialog_confirm(self, "Overwrite", "Overwrite: " + gridname, to_all=True)
+                    if yes or yesall:
+                        np.save(gridname, self.current_layer.vector_grids)
+                        msg_list.append("wrote: " + gridname)
                 msg = "\n".join(msg_list)
                 dialog_info(self, "Finished export", msg)
         elif self.dimensions == 2:
@@ -1533,13 +1528,13 @@ class PlotDialog(QtGui.QWidget):
                     yesall = False
                     if mask[0]:
                         scriptname = os.path.join(dir_path, name + "_plot.py")
-                        template = vaex.ui.templates.matplotlib
                         if not os.path.exists(scriptname):
                             yes, yesall = True, False
                         else:
                             yes, yesall = dialog_confirm(self, "Overwrite", "Overwrite: " + scriptname, to_all=True)
                         if yes or yesall:
                             with open(scriptname, "w") as f:
+                                template = vaex.ui.templates.matplotlib
                                 f.write(template.format(name=name))
                                 msg_list.append("wrote: " + scriptname)
 
@@ -1559,26 +1554,24 @@ class PlotDialog(QtGui.QWidget):
                         if yes or yesall:
                             np.save(gridname, self.current_layer.amplitude_grid)
                             msg_list.append("wrote: " + gridname)
-                        if mask[2]:
-                            if self.current_layer.dataset.mask is not None:
-                                gridname = os.path.join(dir_path, name + "_grid_selection.npy")
-                                if not os.path.exists(gridname) or yesall:
-                                    yes, yesall = True, yesall
-                                else:
-                                    yes, yesall = dialog_confirm(self, "Overwrite", "Overwrite: " + gridname, to_all=True)
-                                if yes or yesall:
-                                    np.save(gridname, self.current_layer.amplitude_selection)
-                                    msg_list.append("wrote: " + gridname)
-                        if mask[3]:
-                            if hasattr(self.current_layer, "vector_grids"):
-                                gridname = os.path.join(dir_path, name + "_grid_vector.npy")
-                                if not os.path.exists(gridname) or yesall:
-                                    yes, yesall = True, yesall
-                                else:
-                                    yes, yesall = dialog_confirm(self, "Overwrite", "Overwrite: " + gridname, to_all=True)
-                                if yes or yesall:
-                                    np.save(gridname, self.current_layer.vector_grids)
-                                    msg_list.append("wrote: " + gridname)
+                        if mask[2] and self.current_layer.dataset.mask is not None:
+                            gridname = os.path.join(dir_path, name + "_grid_selection.npy")
+                            if not os.path.exists(gridname) or yesall:
+                                yes, yesall = True, yesall
+                            else:
+                                yes, yesall = dialog_confirm(self, "Overwrite", "Overwrite: " + gridname, to_all=True)
+                            if yes or yesall:
+                                np.save(gridname, self.current_layer.amplitude_selection)
+                                msg_list.append("wrote: " + gridname)
+                        if mask[3] and hasattr(self.current_layer, "vector_grids"):
+                            gridname = os.path.join(dir_path, name + "_grid_vector.npy")
+                            if not os.path.exists(gridname) or yesall:
+                                yes, yesall = True, yesall
+                            else:
+                                yes, yesall = dialog_confirm(self, "Overwrite", "Overwrite: " + gridname, to_all=True)
+                            if yes or yesall:
+                                np.save(gridname, self.current_layer.vector_grids)
+                                msg_list.append("wrote: " + gridname)
                         msg = "\n".join(msg_list)
                         dialog_info(self, "Finished export", msg)
         else:

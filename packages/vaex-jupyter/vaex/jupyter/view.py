@@ -180,9 +180,11 @@ class Heatmap(ViewBase):
         with self.output:
             selection_was_list, [selections] = vaex.utils.listify(self.model.selection)
             grid = self.model.grid
-            if self.dimension_alternative == 'slice':
-                if self.model.grid_sliced is not None:
-                    grid = self.model.grid_sliced
+            if (
+                self.dimension_alternative == 'slice'
+                and self.model.grid_sliced is not None
+            ):
+                grid = self.model.grid_sliced
             from vaex.utils import _parse_reduction, _parse_f, _normalize
             f = _parse_f(self.transform)
             with np.errstate(divide='ignore', invalid='ignore'):

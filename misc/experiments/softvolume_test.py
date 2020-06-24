@@ -131,9 +131,9 @@ class ThreadPool(object):
 		
 	def run_parallel(self, callable):
 		self.callable = callable
-		for thread in self.threads:
+		for _ in self.threads:
 			self.semaphore_in.release()
-		for thread in self.threads:
+		for _ in self.threads:
 			self.semaphore_out.acquire()
 		
 from vaex.multithreading import ThreadPool

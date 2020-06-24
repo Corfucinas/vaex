@@ -219,8 +219,7 @@ class DatasetDistributed(vaex.dataset.Dataset):
             minmaxes = np.array(minmaxes)
             mins = minmaxes[...,0]
             maxs = minmaxes[...,1]
-            minmax = np.stack([np.nanmin(mins, axis=0), np.nanmax(maxs, axis=0)], axis=-1)
-            return minmax
+            return np.stack([np.nanmin(mins, axis=0), np.nanmax(maxs, axis=0)], axis=-1)
         promise = minmax_reduce(self._apply_all("minmax", expression=expression, binby=binby, limits=limits, shape=shape, selection=selection))
         return promise
 
@@ -260,8 +259,7 @@ def open(url, thread_mover=None):
                 dataset = datasets_dict[base_path]
                 datasets.append(dataset)
             # datasets.append(vx.server(url).datasets()[0])
-        dsd = DatasetDistributed(datasets=datasets)
-        return dsd
+        return DatasetDistributed(datasets=datasets)
 
         # return vaex.remote.ServerRest(hostname, base_path=base_path, port=port, websocket=websocket, **kwargs)
 
@@ -309,7 +307,7 @@ def main(argv):
                     for dataset in datasets:
                         print("\t" + dataset.name)
                         # if common is None:
-                    names = set([k.name for k in datasets])
+                    names = {k.name for k in datasets}
                     common = names if common is None else common.union(names)
             print("Cluster: " + name + " has %d hosts connected, to connect to a dataset, use the following urls:" % (len(clusterlist)))
             for dsname in common or []:

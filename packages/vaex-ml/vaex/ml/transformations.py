@@ -432,10 +432,10 @@ class MinMaxScaler(Transformer):
 
         copy = df.copy()
 
+        a = self.feature_range[0]
+        b = self.feature_range[1]
         for i in range(len(self.features)):
             name = self.prefix + self.features[i]
-            a = self.feature_range[0]
-            b = self.feature_range[1]
             expr = copy[self.features[i]]
             expr = (b-a)*(expr-self.fmin_[i])/(self.fmax_[i]-self.fmin_[i]) + a
             copy[name] = expr

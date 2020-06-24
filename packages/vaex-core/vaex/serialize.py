@@ -25,9 +25,8 @@ def from_dict(d, trusted=True):
     if cls_name not in registry:
         raise ValueError('unknown class: ' + cls_name)
     else:
-        obj = registry[cls_name].state_from(d['state'], trusted=trusted)
         # obj.state_set(d['state'])
-        return obj
+        return registry[cls_name].state_from(d['state'], trusted=trusted)
 
 
 def can_serialize(object):

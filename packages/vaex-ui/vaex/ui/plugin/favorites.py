@@ -76,9 +76,13 @@ class FavStorePlugin(vaex.ui.plugin.PluginPlot):
 		index = len(storage_plots.get_all(self.dialog.type_name, self.dialog.dataset)) + 1
 		default_name = "Settings%d" % index
 		new_name = gettext(self.dialog, "Store settings", "Give a name for the stored settings", default_name)
-		if new_name:
-			if (not storage_plots.exists(new_name, self.dialog.type_name, self.dialog.dataset)) or confirm(self.dialog, "Store settings", "Setting with this name already exists, overwrite"):
-				storage_plots.add(new_name, self.dialog.type_name, self.dialog.dataset, self.dialog.get_options())
+		if new_name and ((not storage_plots.exists(
+		    new_name, self.dialog.type_name, self.dialog.dataset)) or confirm(
+		        self.dialog,
+		        "Store settings",
+		        "Setting with this name already exists, overwrite",
+		    )):
+			storage_plots.add(new_name, self.dialog.type_name, self.dialog.dataset, self.dialog.get_options())
 		
 
 class FavLoadPlugin(vaex.ui.plugin.PluginDataset):

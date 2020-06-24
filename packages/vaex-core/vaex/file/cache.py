@@ -102,10 +102,7 @@ class CachedFile:
             self.mask_length = self.mask_file.length
 
     def dup(self):
-        if callable(self.file):
-            file = self.file
-        else:
-            file = vaex.file.dup(self.file)
+        file = self.file if callable(self.file) else vaex.file.dup(self.file)
         return CachedFile(file, self.path, self.cache_dir, self.block_size, data_file=self.data_file, mask_file=self.mask_file)
 
     def tell(self):

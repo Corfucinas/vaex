@@ -140,7 +140,7 @@ _escapes = {
   'f': '\f',
   'r': '\r',
 }
-_escapes_rev = dict((v, '\\' + k) for k,v in _escapes.items())
+_escapes_rev = {v: '\\' + k for k,v in _escapes.items()}
 for c in '\\' + _COMMENT_CHARS + _KEY_TERMINATORS_EXPLICIT:
   _escapes_rev.setdefault(c, '\\' + c)
 
@@ -199,11 +199,7 @@ def _escape_value(value):
   if len(tail) == len(value):
     return _escape(value)
 
-  if tail:
-    head = value[:-len(tail)]
-  else:
-    head = value
-
+  head = value[:-len(tail)] if tail else value
   # escape any leading whitespace, but leave other spaces intact
   return _escape(head, string.whitespace) + _escape(tail)
 

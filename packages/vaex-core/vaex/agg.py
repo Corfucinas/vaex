@@ -32,9 +32,8 @@ class aggregation_encoding:
         type = agg_spec.pop('aggregation')
         f = aggregates[type]
         args = []
-        if type == '_sum_moment':
-            if 'parameters' in agg_spec:  # renameing between spec and implementation
-                agg_spec['moment'] = agg_spec.pop('parameters')[0]
+        if type == '_sum_moment' and 'parameters' in agg_spec:  # renameing between spec and implementation
+            agg_spec['moment'] = agg_spec.pop('parameters')[0]
         if type == 'first':
             args = agg_spec.pop('expression')
         return f(*args, **agg_spec)
@@ -57,10 +56,7 @@ class AggregatorDescriptorBasic(AggregatorDescriptor):
         self.edges = edges
         self.selection = selection
         if not multi_args:
-            if self.expression == '*':
-                self.expressions = []
-            else:
-                self.expressions = [self.expression]
+            self.expressions = [] if self.expression == '*' else [self.expression]
         else:
             self.expressions = expression
 
@@ -107,8 +103,7 @@ class AggregatorDescriptorBasic(AggregatorDescriptor):
 
     def _create_operation(self, df, grid):
         agg_op_type = vaex.utils.find_type_from_dtype(vaex.superagg, self.name + "_", self.dtype_in)
-        agg_op = agg_op_type(grid, *self.agg_args)
-        return agg_op
+        return agg_op_type(grid, *self.agg_args)
 
     def get_result(self, agg_operation):
         grid = np.asarray(agg_operation)
@@ -135,8 +130,7 @@ class AggregatorDescriptorNUnique(AggregatorDescriptorBasic):
         self.dtype_in = df[str(self.expressions[0])].dtype
         self.dtype_out = np.dtype('int64')
         agg_op_type = vaex.utils.find_type_from_dtype(vaex.superagg, self.name + "_", self.dtype_in)
-        agg_op = agg_op_type(grid, self.dropmissing, self.dropnan)
-        return agg_op
+        return agg_op_type(grid, self.dropmissing, self.dropnan)
 
 
 class AggregatorDescriptorMulti(AggregatorDescriptor):

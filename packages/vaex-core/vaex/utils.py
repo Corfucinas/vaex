@@ -135,10 +135,7 @@ def disjoined(data):
         shape = [1 for k in range(dim)]
         shape[d] = len(data1d)
         data1d = data1d.reshape(tuple(shape))
-        if d == 0:
-            data_disjoined = data1d
-        else:
-            data_disjoined = data_disjoined * data1d
+        data_disjoined = data1d if d == 0 else data_disjoined * data1d
     return data_disjoined
 
 
@@ -281,10 +278,11 @@ def _progressbar_widget(type=None, name="processing", max_value=1):
     return pb.ProgressBarWidget(0, 1, name=name)
 
 
-_progressbar_typemap = {}
-_progressbar_typemap['progressbar2'] = _progressbar_progressbar2
-_progressbar_typemap['vaex'] = _progressbar_vaex
-_progressbar_typemap['widget'] = _progressbar_widget
+_progressbar_typemap = {
+    'progressbar2': _progressbar_progressbar2,
+    'vaex': _progressbar_vaex,
+    'widget': _progressbar_widget,
+}
 
 
 def progressbar(type_name=None, title="processing", max_value=1):
@@ -354,7 +352,7 @@ class _progressbar_wrapper_sum(_progressbar):
         if len(self.children) == 0:
             self.fraction = fraction
         else:
-            self.fraction = sum([c.fraction for c in self.children]) / len(self.children)
+            self.fraction = sum(c.fraction for c in self.children) / len(self.children)
         fraction = self.fraction
         if fraction != self.last_fraction:  # avoid too many calls
             if fraction == 1 and not self.finished:  # make sure we call finish only once
@@ -384,15 +382,12 @@ def progressbars(f=True, next=None, name=None):
     if callable(f):
         next = f
         f = False
-    if f in [None, False]:
-        return _progressbar_wrapper_sum(next=next, name=name)
+    if f not in [None, False] and f is True:
+        return _progressbar_wrapper_sum(bar=progressbar(), next=next, name=name)
+    elif f not in [None, False] and isinstance(f, six.string_types):
+        return _progressbar_wrapper_sum(bar=progressbar(f), next=next, name=name)
     else:
-        if f is True:
-            return _progressbar_wrapper_sum(bar=progressbar(), next=next, name=name)
-        elif isinstance(f, six.string_types):
-            return _progressbar_wrapper_sum(bar=progressbar(f), next=next, name=name)
-        else:
-            return _progressbar_wrapper_sum(next=next, name=name)
+        return _progressbar_wrapper_sum(next=next, name=name)
 
 
 def progressbar_callable(title="processing", max_value=1):
@@ -465,20 +460,16 @@ def check_memory_usage(bytes_needed, confirm):
         if bytes_needed < (psutil.virtual_memory().available + psutil.swap_memory().free):
             text = "Action requires %s, you have enough swap memory available but it will make your computer slower, do you want to continue?" % (
             filesize_format(bytes_needed),)
-            return confirm("Memory usage issue", text)
         else:
             text = "Action requires %s, you do not have enough swap memory available, do you want try anyway?" % (
             filesize_format(bytes_needed),)
-            return confirm("Memory usage issue", text)
+        return confirm("Memory usage issue", text)
     return True
 
 
 def ensure_string(string_or_bytes, encoding="utf-8", cast=False):
     if cast:
-        if six.PY2:
-            string_or_bytes = unicode(string_or_bytes)
-        else:
-            string_or_bytes = str(string_or_bytes)
+        string_or_bytes = unicode(string_or_bytes) if six.PY2 else str(string_or_bytes)
     if isinstance(string_or_bytes, six.string_types):
         return string_or_bytes
     else:
@@ -539,19 +530,13 @@ def unlistify(waslist, *args):
 def find_valid_name(name, used=[]):
     first, rest = name[0], name[1:]
     if not first.isidentifier():
-        if ('col_' + first).isidentifier():
-            first = 'col_' + first
-        else:
-            first = 'col_'
+        first = 'col_' + first if ('col_' + first).isidentifier() else 'col_'
     name = first
     for char in rest:
         # we test if it is an identifier with _ prefixed, since not every first character
         # and following character are treated the same
         # https://docs.python.org/3/reference/lexical_analysis.html#identifiers
-        if not ('_' + char).isidentifier():
-            name += '_'
-        else:
-            name += char
+        name += '_' if not ('_' + char).isidentifier() else char
     if keyword.iskeyword(name):
         name += '_'
     if name in used:
@@ -736,7 +721,7 @@ def _isnumber(x):
 
 
 def _is_limit(x):
-    return isinstance(x, (tuple, list, np.ndarray)) and all([_isnumber(k) for k in x])
+    return isinstance(x, (tuple, list, np.ndarray)) and all(_isnumber(k) for k in x)
 
 
 def _ensure_list(x):
@@ -747,9 +732,7 @@ def _ensure_string_from_expression(expression):
     import vaex.expression
     if expression is None:
         return None
-    elif isinstance(expression, bool):
-        return expression
-    elif isinstance(expression, six.string_types):
+    elif isinstance(expression, bool) or isinstance(expression, six.string_types):
         return expression
     elif isinstance(expression, vaex.expression.Expression):
         return expression.expression

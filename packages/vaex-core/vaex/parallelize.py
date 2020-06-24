@@ -27,14 +27,12 @@ def log(*args):
 
 def serialize(obj):
     data = pickle.dumps(obj, pickle_protocol)
-    rawdata = data.encode(pickle_encoding)
-    return rawdata
+    return data.encode(pickle_encoding)
 
 
 def deserialize(rawdata):
     data = rawdata.decode(pickle_encoding)
-    obj = pickle.loads(data)
-    return obj
+    return pickle.loads(data)
 
 
 class InfoThread(threading.Thread):
@@ -46,10 +44,7 @@ class InfoThread(threading.Thread):
         # self.
 
     def n_done(self):
-        n = 0
-        for execution in self.executions:
-            n += len(execution.results)
-        return n
+        return sum(len(execution.results) for execution in self.executions)
 
     def run(self):
         while 1:
@@ -81,7 +76,7 @@ class InfoThreadProgressBar(InfoThread):
     def run(self):
         done = False
         error = False
-        while (not done) and (not error):
+        while not (done or error):
             count = self.n_done()  # self.fullsize - self.taskQueue.qsize()
             self.bar.update(count)
             time.sleep(0.1)
@@ -226,11 +221,6 @@ class ForkExecutor(IOExecutor):
                     exc_info = traceback.format_exc()
                     # raise "bla"
                     # done = True
-                except KeyboardInterrupt:
-                    info = "exception"
-                    exc_info = traceback.format_exc()
-                    # raise "bla"
-                    # done = True
                 # encode result
                 self.log("c: pickling")
                 self.output.write(serialize((info, exc_info, result)))
@@ -332,10 +322,7 @@ def timed(f):
         print("total cpu time:       % 9.3f sec. (time it would take on a single cpu/core)" % (dt_total))
         print("elapsed time:         % 9.3f sec. (normal wallclock time it took)" % (walltime - walltime0))
         dt = walltime - walltime0
-        if dt == 0:
-            eff = 0.
-        else:
-            eff = dt_total / (dt)
+        eff = 0. if dt == 0 else dt_total / (dt)
         print("efficiency factor     % 9.3f      (ratio of the two above ~= # cores)" % eff)
         return result
     return execute
@@ -440,13 +427,9 @@ if __name__ == "__main__":
         primes = []
         from_nr = max(from_nr, 2)
         for p in range(from_nr, to_nr):
-            isprime = True
             time.sleep(1)
 
-            for i in range(2, p):
-                if p % i == 0:
-                    isprime = False
-                    break
+            isprime = all(p % i != 0 for i in range(2, p))
             if isprime:
                 primes.append(p)
         return primes

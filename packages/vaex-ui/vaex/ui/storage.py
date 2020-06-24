@@ -41,10 +41,7 @@ class Storage(object):
 
     def exists(self, name, type_name, dataset):
         key = self._make_key(name, type_name, dataset)
-        for option in self.all_options:
-            if key == option["key"]:
-                return True
-        return False
+        return any(key == option["key"] for option in self.all_options)
 
     def add(self, name, type_name, dataset, options):
         key = self._make_key(name, type_name, dataset)
@@ -55,10 +52,12 @@ class Storage(object):
         # make sure we overwrite older settings
         self.all_options = [set for set in self.all_options if set["key"] != key]
 
-        identifiers = {}
-        identifiers["name"] = dataset.name
-        identifiers["path"] = dataset.path
-        identifiers["column_names"] = dataset.get_column_names()
+        identifiers = {
+            "name": dataset.name,
+            "path": dataset.path,
+            "column_names": dataset.get_column_names(),
+        }
+
         self.all_options.append({"identifiers": identifiers, "options": options, "key": key, "name": name, "type_name": type_name})
 
         # print((self.all_options))

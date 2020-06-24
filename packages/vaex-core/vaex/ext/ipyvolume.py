@@ -50,9 +50,9 @@ class PlotDefault(PlotBase):
                     ok &= (vcount < vcount_max)
                 x, y, z = ipyvolume.examples.xyz(self.get_vshape()[0], limits=self.limits, sparse=False, centers=True)
                 v1d = [k[ok] for k in [x, y, z, vx, vy, vz]]
-                vsize = 5
-                vcolor = "grey"
                 if self._first_time:
+                    vsize = 5
+                    vcolor = "grey"
                     self.quiver = p3.quiver(*v1d, size=vsize, color=vcolor)
                 else:
                     self.quiver.x = x[ok]

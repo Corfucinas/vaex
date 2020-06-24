@@ -83,23 +83,20 @@ def api_datasets():
 @app.route('/colormaps')
 def colormaps():
 	js = json.dumps(vaex.ui.colormaps)
-	response= Response(js, status=200, mimetype='application/json')
-	return response
+	return Response(js, status=200, mimetype='application/json')
 
 
 @app.route('/datasets/<dataset>/columns')
 def api_columns(dataset):
 	dataset = dataset_map[dataset]
 	js = json.dumps(dataset.column_names)
-	response= Response(js, status=200, mimetype='application/json')
-	return response
+	return Response(js, status=200, mimetype='application/json')
 
 @app.route('/datasets/<dataset>/info')
 def api_info(dataset):
 	dataset = dataset_map[dataset]
 	js = json.dumps(dict(column_names=dataset.get_column_names(), length=dataset.full_length()))
-	response= Response(js, status=200, mimetype='application/json')
-	return response
+	return Response(js, status=200, mimetype='application/json')
 
 
 import StringIO
@@ -121,8 +118,7 @@ def api_range(name, x, y=None):
 	#data = {"min":float(np.min(blockx)), "max":float(np.max(blockx))}
 	#print data
 	js = json.dumps(data)
-	response= Response(js, status=200, mimetype='application/json')
-	return response
+	return Response(js, status=200, mimetype='application/json')
 
 @app.route('/datasets/<name>/minmax')
 def api_minmax(name):
@@ -151,8 +147,7 @@ def api_select(name):
 	expression = json.loads(request.args["expression"])
 	result = dataset.select(expression)
 	result = 0
-	response= Response(json.dumps(result), status=200, mimetype='application/json')
-	return response
+	return Response(json.dumps(result), status=200, mimetype='application/json')
 
 import inspect
 def simple_handle(name, method_name):

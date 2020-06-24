@@ -25,10 +25,7 @@ def xyz(shape=128, limits=[-3, 3], spherical=False, sparse=True, centers=False):
         v = [slice(vmin + (vmax - vmin) / float(N) / 2, vmax - (vmax - vmin) / float(N) / 4, (vmax - vmin) / float(N)) for (vmin, vmax), N in zip(limits, shape)]
     else:
         v = [slice(vmin, vmax + (vmax - vmin) / float(N) / 2, (vmax - vmin) / float(N - 1)) for (vmin, vmax), N in zip(limits, shape)]
-    if sparse:
-        x, y, z = np.ogrid.__getitem__(v)
-    else:
-        x, y, z = np.mgrid.__getitem__(v)
+    x, y, z = np.ogrid.__getitem__(v) if sparse else np.mgrid.__getitem__(v)
     if spherical:
         r = np.linalg.norm([x, y, z])
         theta = np.arctan2(y, x)
@@ -115,10 +112,10 @@ class IpyvolumeBackend(BackendBase):
             # TODO: we assume all dimensions are equal length
             x, y, z = xyz(vx.shape[0], limits=self.limits, sparse=False, centers=True)
             v1d = [k[ok] for k in [x, y, z, vx, vy, vz]]
-            vsize = 5
-            vcolor = "grey"
             if self._first_time_vector:
                 self._first_time_vector = False
+                vsize = 5
+                vcolor = "grey"
                 self.quiver = p3.quiver(*v1d, size=vsize, color=vcolor)
             else:
                 with self.quiver.hold_trait_notifications():

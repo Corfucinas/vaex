@@ -145,10 +145,7 @@ class UCDCompleter(Completer):
 
     def get_suggestions(self, typed_word, text_left, text_right):
         typed_word = typed_word.lower()
-        if text_left.strip():
-            word_list = secondary_list
-        else:
-            word_list = primary_list
+        word_list = secondary_list if text_left.strip() else primary_list
         descriptions = {key: desc.lower() for key, desc in ucd_words._descriptions.items() if key in word_list}
         suggestions = []
         if typed_word:
@@ -281,18 +278,14 @@ if __name__ == "__main__":
     app = QtGui.QApplication([])
     dialog = QtGui.QDialog()
     dialog.resize(400, 100)
-    if 1:
-        lineEdit = LineCompleter(dialog)
-        # combo = QtGui.QComboBox(dialog)
-        # combo.setEditable(True)
-        # combo.addItems("hoeba blaat schaap".split())
-        # lineEdit = combo.lineEdit()
-        # completer = MathCompleter(lineEdit, vars)
-        completer = UnitCompleter(lineEdit)
-        lineEdit.setCompleter(completer)
-    else:
-        dataset = vaex.open(sys.argv[1])
-        box = ExpressionCombobox(dialog, dataset)
+    lineEdit = LineCompleter(dialog)
+    # combo = QtGui.QComboBox(dialog)
+    # combo.setEditable(True)
+    # combo.addItems("hoeba blaat schaap".split())
+    # lineEdit = combo.lineEdit()
+    # completer = MathCompleter(lineEdit, vars)
+    completer = UnitCompleter(lineEdit)
+    lineEdit.setCompleter(completer)
     dialog.show()
     dialog.raise_()
     dialog.exec_()

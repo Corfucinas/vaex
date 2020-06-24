@@ -62,19 +62,18 @@ def project(x, y, z, modelview, projection, viewport, winx, winy, winz):
 	
 @jit('(f4[:], f4[:], f4[:], f4[:], u1[:], f8, f8, f8)', nopython=True)
 def pnpoly(vertx, verty, testx, testy, inside, meanx, meany, radius):
-	nvert = len(vertx)
-	ntest = len(testx)
-	for k in range(ntest):
-		distancesq = (testx[k] - meanx)**2 + (testy[k] - meany)**2
-		inside[k] = 0
-		if distancesq < radius**2: # quick check
-			inside[k] = 0
-			if 1:
-				j = nvert-1
-				for i in range(nvert):
-					if (((verty[i]>testy[k]) != (verty[j]>testy[k])) and (testx[k] < (vertx[j]-vertx[i]) * (testy[k]-verty[i]) / (verty[j]-verty[i]) + vertx[i]) ):
-						inside[k] = not inside[k]
-					j = i
+    nvert = len(vertx)
+    ntest = len(testx)
+    for k in range(ntest):
+        distancesq = (testx[k] - meanx)**2 + (testy[k] - meany)**2
+        inside[k] = 0
+        if distancesq < radius**2: # quick check
+            inside[k] = 0
+            j = nvert-1
+            for i in range(nvert):
+            	if (((verty[i]>testy[k]) != (verty[j]>testy[k])) and (testx[k] < (vertx[j]-vertx[i]) * (testy[k]-verty[i]) / (verty[j]-verty[i]) + vertx[i]) ):
+            		inside[k] = not inside[k]
+            	j = i
 
 lasso_test = [(102, 245), (101, 241), (98, 235), (96, 232), (94, 230), (93, 225), (92, 221), (92, 219), (94, 216), (95, 215), (99, 213), (104, 212), (106, 212), (112, 211), (119, 211), (126, 215), (134, 221), (137, 225), (140, 233), (141, 242), (141, 252), (137, 254), (123, 257), (109, 253), (104, 251), (99, 243), (98, 240)]
 lasso_list = lasso_test

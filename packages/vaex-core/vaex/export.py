@@ -43,9 +43,8 @@ def _export(dataset_input, dataset_output, random_index_column, path, column_nam
     :return:
     """
 
-    if selection:
-        if selection == True:  # easier to work with the name
-            selection = "default"
+    if selection and selection == True:  # easier to work with the name
+        selection = "default"
 
     N = len(dataset_input) if not selection else dataset_input.selected_length(selection)
     if N == 0:
@@ -63,7 +62,7 @@ def _export(dataset_input, dataset_output, random_index_column, path, column_nam
     order_array_inverse = None
 
     # for strings we also need the inverse order_array, keep track of that
-    has_strings = any([dataset_input.data_type(k) == str_type for k in column_names])
+    has_strings = any(dataset_input.data_type(k) == str_type for k in column_names)
 
     if partial_shuffle:
         # if we only export a portion, we need to create the full length random_index array, and
@@ -118,19 +117,18 @@ def _export(dataset_input, dataset_output, random_index_column, path, column_nam
     string_columns = []
     futures = []
 
-    thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=1) 
-    if True:
-        for column_name in column_names:
-            sparse_matrix = dataset_output._sparse_matrix(column_name)
-            if sparse_matrix is not None:
-                # sparse columns are written differently
-                sparse_groups[id(sparse_matrix)].append(column_name)
-                sparse_matrices[id(sparse_matrix)] = sparse_matrix
-                continue
-            logger.debug("  exporting column: %s " % column_name)
-            future = thread_pool.submit(_export_column, dataset_input, dataset_output, column_name,
-                shuffle, sort, selection, N, order_array, order_array_inverse, progress_status)
-            futures.append(future)
+    thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    for column_name in column_names:
+        sparse_matrix = dataset_output._sparse_matrix(column_name)
+        if sparse_matrix is not None:
+            # sparse columns are written differently
+            sparse_groups[id(sparse_matrix)].append(column_name)
+            sparse_matrices[id(sparse_matrix)] = sparse_matrix
+            continue
+        logger.debug("  exporting column: %s " % column_name)
+        future = thread_pool.submit(_export_column, dataset_input, dataset_output, column_name,
+            shuffle, sort, selection, N, order_array, order_array_inverse, progress_status)
+        futures.append(future)
 
     done = False
     progress(0)
@@ -142,9 +140,10 @@ def _export(dataset_input, dataset_output, random_index_column, path, column_nam
             except concurrent.futures.TimeoutError:
                 done = False
                 break
-        if not done:
-            if not progress(progress_status.value / float(progress_total)):
-                progress_status.cancelled = True
+        if not done and not progress(
+            progress_status.value / float(progress_total)
+        ):
+            progress_status.cancelled = True
 
     for sparse_matrix_id, column_names in sparse_groups.items():
         sparse_matrix = sparse_matrices[sparse_matrix_id]

@@ -202,11 +202,11 @@ def create_groupby(df, groupby):
 
 
 def create_row(df):
+
     class RowBase(graphene.ObjectType):
         pass
     attrs = {name: map_to_field(df, name)() for name in df.get_column_names(alias=False)}
-    Row = type("Row", (RowBase, ), attrs)
-    return Row
+    return type("Row", (RowBase, ), attrs)
 
 def create_aggregate(df, groupby=None):
     postfix = "_".join(groupby)

@@ -436,8 +436,7 @@ class ColumnList(v.VuetifyTemplate, vt.ColumnsMixin):
 
     @traitlets.default('editor')
     def _editor(self):
-        editor = VirtualColumnEditor(df=self.df)
-        return editor
+        return VirtualColumnEditor(df=self.df)
 
     @traitlets.default('components')
     def _components(self):

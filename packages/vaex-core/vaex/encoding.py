@@ -202,28 +202,28 @@ class Encoding:
         self.blobs = {}
 
     def encode(self, typename, value):
-        encoded = self.registry[typename].encode(self, value)
-        return encoded
+        return self.registry[typename].encode(self, value)
 
     def encode_list(self, typename, values):
-        encoded = [self.registry[typename].encode(self, k) for k in values]
-        return encoded
+        return [self.registry[typename].encode(self, k) for k in values]
 
     def encode_dict(self, typename, values):
-        encoded = {key: self.registry[typename].encode(self, value) for key, value in values.items()}
-        return encoded
+        return {
+            key: self.registry[typename].encode(self, value)
+            for key, value in values.items()
+        }
 
     def decode(self, typename, value, **kwargs):
-        decoded = self.registry[typename].decode(self, value, **kwargs)
-        return decoded
+        return self.registry[typename].decode(self, value, **kwargs)
 
     def decode_list(self, typename, values, **kwargs):
-        decoded = [self.registry[typename].decode(self, k, **kwargs) for k in values]
-        return decoded
+        return [self.registry[typename].decode(self, k, **kwargs) for k in values]
 
     def decode_dict(self, typename, values, **kwargs):
-        decoded = {key: self.registry[typename].decode(self, value, **kwargs) for key, value in values.items()}
-        return decoded
+        return {
+            key: self.registry[typename].decode(self, value, **kwargs)
+            for key, value in values.items()
+        }
 
     def add_blob(self, buffer):
         blob_id = str(uuid.uuid4())
@@ -271,10 +271,7 @@ def _unpack_blobs(bytes):
     count, = struct.unpack('q', stream.read(8))
     offsets = struct.unpack(f'{count+1}q', stream.read(8 * (count + 1)))
     assert offsets[-1] == len(bytes)
-    blobs = []
-    for i1, i2 in zip(offsets[:-1], offsets[1:]):
-        blobs.append(bytes[i1:i2])
-    return blobs
+    return [bytes[i1:i2] for i1, i2 in zip(offsets[:-1], offsets[1:])]
 
 
 class binary:

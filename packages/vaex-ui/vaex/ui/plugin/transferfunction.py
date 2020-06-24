@@ -407,4 +407,3 @@ class TransferFunctionPlugin(vaex.ui.plugin.PluginLayer):
 			if name in options:
 				setter = getattr(self, "set_" + name)
 				setter(options[name], update=False)
-		pass

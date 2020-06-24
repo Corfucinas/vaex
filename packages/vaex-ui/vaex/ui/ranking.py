@@ -220,7 +220,7 @@ class ____RankingTableModel(QtCore.QAbstractTableModel):
             print(sortlist)
             self.indices = list(map(operator.itemgetter(1), sortlist))
             print((self.indices))
-        if Ncol == 1:
+        elif Ncol == 1:
             # get indices, sorted by ranking, or no sorting
             if None not in self.ranking:
                 sortlist = list(zip(self.ranking, list(range(len(self.pairs)))))
@@ -396,8 +396,7 @@ class SubspaceTable(QtGui.QTableWidget):
 
     def getSelected(self):
         selection = [checkbox.checkState() == QtCore.Qt.Checked for checkbox in self.checkboxes]
-        selected_pairs = [pair for pair, selected in zip(self.pairs, selection) if selected]
-        return selected_pairs
+        return [pair for pair, selected in zip(self.pairs, selection) if selected]
 
     def setQualities(self, pairs, qualities):
         self.qualities = {}
@@ -1059,10 +1058,10 @@ class RankDialog(QtGui.QDialog):
         basename, ext = os.path.splitext(self.dataset.path)
         path = basename + ("-ranking-%dd" % table.dim) + ".properties"
         filename = get_path_save(self, path=path, title="Export ranking", file_mask="properties file *.properties")
-        expressions = set()
         if filename:
-            counts = 0
             with open(filename, "w") as file:
+                expressions = set()
+                counts = 0
                 for pair in table.pairs:
                     if pair in table.qualities:
                         file.write("%s.mutual_information=%f\n" % (".".join(pair), table.qualities[pair]))

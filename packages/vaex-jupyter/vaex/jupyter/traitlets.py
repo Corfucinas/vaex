@@ -4,11 +4,11 @@ import vaex
 
 def nice_type(df, name):
     dtype = df.data_type(name)
-    type_map = {'i': 'integer', 'u': 'integer', 'f': 'float', 'b': 'boolean',
-                'M': 'date/time'}
     if dtype == str:
         return 'string'
     else:
+        type_map = {'i': 'integer', 'u': 'integer', 'f': 'float', 'b': 'boolean',
+                    'M': 'date/time'}
         return type_map[dtype.kind]
 
 

@@ -8,17 +8,16 @@ MAX_LENGTH = 50
 
 
 def _format_value(value):
-    if isinstance(value, six.string_types):
+    if (
+        isinstance(value, six.string_types)
+        or not isinstance(value, bytes)
+        and isinstance(value, np.ma.core.MaskedConstant)
+    ):
         value = str(value)
     elif isinstance(value, bytes):
         value = repr(value)
-    elif isinstance(value, np.ma.core.MaskedConstant):
-        value = str(value)
     if isinstance(value, np.datetime64):
-        if np.isnat(value):
-            value = 'NaT'
-        else:
-            value = ' '.join(str(value).split('T'))
+        value = 'NaT' if np.isnat(value) else ' '.join(str(value).split('T'))
     if isinstance(value, np.timedelta64):
         if np.isnat(value):
             value = 'NaT'
@@ -37,7 +36,6 @@ def _format_value(value):
         value = str(value)
     if isinstance(value, float):
         value = repr(value)
-    if isinstance(value, (str, bytes)):
-        if len(value) > MAX_LENGTH:
-            value = repr(value[:MAX_LENGTH-3])[:-1] + '...'
+    if isinstance(value, (str, bytes)) and len(value) > MAX_LENGTH:
+        value = repr(value[:MAX_LENGTH-3])[:-1] + '...'
     return value

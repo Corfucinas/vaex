@@ -188,7 +188,7 @@ class ZoomPlugin(vaex.ui.plugin.PluginPlot):
 				#link.sendRangesShow(self.dialog.state.ranges_viewport[axisIndex], linkButton)
 		linked_buttons = [button for button in self.linkButtons if button.link is not None]
 		links = [button.link for button in linked_buttons]
-		if len(linked_buttons) > 0:
+		if linked_buttons:
 			logger.debug("sending compute message")
 			vaex.dataset.Link.sendCompute(links, linked_buttons)
 		self.compute()

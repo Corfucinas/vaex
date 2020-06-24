@@ -34,9 +34,8 @@ def export_hdf5_v1(dataset, path, column_names=None, byteorder="=", shuffle=Fals
     :return:
     """
 
-    if selection:
-        if selection == True:  # easier to work with the name
-            selection = "default"
+    if selection and selection == True:  # easier to work with the name
+        selection = "default"
     # first open file using h5py api
     with h5py.File(path, "w") as h5file_output:
 
@@ -121,9 +120,8 @@ def export_hdf5(dataset, path, column_names=None, byteorder="=", shuffle=False, 
     :return:
     """
 
-    if selection:
-        if selection == True:  # easier to work with the name
-            selection = "default"
+    if selection and selection == True:  # easier to work with the name
+        selection = "default"
     # first open file using h5py api
     with h5py.File(path, "w") as h5file_output:
 

@@ -166,7 +166,7 @@ class SubspaceGridded(object):
         fig, ax = pylab.subplots()
         self.plot(axes=ax, f=np.log1p)
         import vaex.utils
-        if all([k is not None for k in [self.vx, self.vy, self.vcounts]]):
+        if all(k is not None for k in [self.vx, self.vy, self.vcounts]):
             N = self.vx.grid.shape[0]
             bounds = self.subspace_bounded.bounds
             print(bounds)
@@ -224,22 +224,10 @@ class SubspaceGridded(object):
                 for i in range(3):
                     subdata[:, :, i] = rgba[:, :, i]
                 subdata[:, :, 3] = (grid_normalized[zindex] * 255).astype(np.uint8)  # * 0 + 255
-                if 0:
-                    filename = "cube%03d.png" % zindex
-                    img = PIL.Image.frombuffer("RGB", (128, 128), subdata[:, :, 0:3] * 1)
-                    print(("saving to", filename))
-                    img.save(filename)
         img = PIL.Image.frombuffer("RGBA", (128 * 16, 128 * 8), data, 'raw')  # , "RGBA", 0, -1)
         # filename = "cube.png"
         # print "saving to", file
         img.save(file, "png")
-
-        if 0:
-            filename = "colormap.png"
-            print(("saving to", filename))
-            height, width = self.colormap_data.shape[:2]
-            img = PIL.Image.frombuffer("RGB", (width, height), self.colormap_data)
-            img.save(filename)
 
 
 class SubspaceBounded(object):
@@ -279,9 +267,13 @@ class Subspaces(object):
         self.dimension = first_subspace.dimension
         self.df = self.subspaces[0].df
         for subspace in self.subspaces:
-            assert subspace.df == self.subspaces[0].df
-            assert subspace.delay == self.subspaces[0].delay
-            assert subspace.dimension == self.subspaces[0].dimension, "subspace is of dimension %s, while first subspace if of dimension %s" % (subspace.dimension, self.subspaces[0].dimension)
+            assert subspace.df == first_subspace.df
+            assert subspace.delay == first_subspace.delay
+            assert subspace.dimension == first_subspace.dimension, (
+                "subspace is of dimension %s, while first subspace if of dimension %s"
+                % (subspace.dimension, first_subspace.dimension)
+            )
+
             # assert subspace.sele== self.subspaces[0].delay
             self.expressions.update(subspace.expressions)
         self.expressions = list(self.expressions)
@@ -496,8 +488,7 @@ class Subspace(object):
         f = StringIO()
         img.save(f, "png")
         from base64 import b64encode
-        imgurl = "data:image/png;base64," + b64encode(f.getvalue()) + ""
-        return imgurl
+        return "data:image/png;base64," + b64encode(f.getvalue()) + ""
 
     def normalize_grid(self, grid):
         grid = grid * 1  # copy
@@ -721,11 +712,10 @@ class Subspace(object):
             sm = matplotlib.cm.ScalarMappable(norm, colormap)
             sm.set_array(1)  # make matplotlib happy (strange behavious)
             colorbar = fig.colorbar(sm)
+            colorbar.set_ticks(np.arange(gmin, gmax + delta / 2, delta))
             if group_labels:
-                colorbar.set_ticks(np.arange(gmin, gmax + delta / 2, delta))
                 colorbar.set_ticklabels(group_labels)
             else:
-                colorbar.set_ticks(np.arange(gmin, gmax + delta / 2, delta))
                 colorbar.set_ticklabels(map(lambda x: "%f" % x, np.arange(gmin, gmax + delta / 2, delta)))
             colorbar.ax.set_ylabel(group_by)
             # matplotlib.colorbar.ColorbarBase(axes, norm=norm, cmap=colormap)
@@ -874,10 +864,7 @@ class Subspace(object):
         def make_image(executor, limits):
             # print "make image" * 100
             self.executor = executor
-            if self.df.has_selection():
-                sub = self.selected()
-            else:
-                sub = self
+            sub = self.selected() if self.df.has_selection() else self
             return sub.image_rgba(limits=limits, size=size, f=f)
         progress = widgets.FloatProgress(value=0.0, min=0.0, max=1.0, step=0.01)
         updater = vaex.ext.bqplot.DebouncedThreadedUpdater(self, size, im, make_image, progress_widget=progress)
@@ -1114,10 +1101,15 @@ class SubspaceLocal(Subspace):
 
     def _moment(self, moment=1):
         def mean_reduce(means_and_counts1, means_and_counts2):
-            means_and_counts = []
-            for (mean1, count1), (mean2, count2) in zip(means_and_counts1, means_and_counts2):
-                means_and_counts.append([np.nansum([mean1 * count1, mean2 * count2]) / (count1 + count2), count1 + count2])
-            return means_and_counts
+            return [
+                [
+                    np.nansum([mean1 * count1, mean2 * count2]) / (count1 + count2),
+                    count1 + count2,
+                ]
+                for (mean1, count1), (mean2, count2) in zip(
+                    means_and_counts1, means_and_counts2
+                )
+            ]
 
         def remove_counts(means_and_counts):
             return self._toarray(means_and_counts)[:, 0]
@@ -1134,10 +1126,15 @@ class SubspaceLocal(Subspace):
     def var(self, means=None):
         # variances are linear, use the mean to reduce
         def vars_reduce(vars_and_counts1, vars_and_counts2):
-            vars_and_counts = []
-            for (var1, count1), (var2, count2) in zip(vars_and_counts1, vars_and_counts2):
-                vars_and_counts.append([np.nansum([var1 * count1, var2 * count2]) / (count1 + count2), count1 + count2])
-            return vars_and_counts
+            return [
+                [
+                    np.nansum([var1 * count1, var2 * count2]) / (count1 + count2),
+                    count1 + count2,
+                ]
+                for (var1, count1), (var2, count2) in zip(
+                    vars_and_counts1, vars_and_counts2
+                )
+            ]
 
         def remove_counts(vars_and_counts):
             return self._toarray(vars_and_counts)[:, 0]

@@ -18,9 +18,7 @@ def gf(grid, sigma, **kwargs):
     return scipy.ndimage.gaussian_filter(grid, sigma=sigma, **kwargs)
 
 
-functions = {}
-functions["dog"] = dog
-functions["gf"] = gf
+functions = {"dog": dog, "gf": gf}
 
 
 def grid_average(scope, counts_name="counts", weighted_name="weighted"):
@@ -41,8 +39,7 @@ class GridScope(object):
         # if locals:
         # self.__dict__.update(locals)
         self.globals = globals or {}
-        self.lazy = {}
-        self.lazy["average"] = grid_average
+        self.lazy = {"average": grid_average}
         self.globals["cumulative"] = self.cumulative
         self.globals["normalize"] = self.normalize
         self.globals.update(functions)
@@ -91,10 +88,6 @@ class GridScope(object):
         return self.__dict__[key]
 
     def evaluate(self, expression):
-        if 0:
-            locals = dict(self.__dict__)
-            del locals["globals"]
-            logger.debug("evaluating: %r locals=%r", expression, locals)
         return eval(expression, self.globals, self)
 
     def slice(self, slice):

@@ -107,18 +107,12 @@ class KMeans(vaex.ml.state.HasState):
         k = centroids.shape[0]
         dimensions = centroids.shape[1]
         distances_sq = np.zeros((k, N))
-        if 1:
-            distances_square(distances_sq, centroids, *blocks)
-        else:
-            for d in range(dimensions):
-                for i in range(k):
-                    distances_sq[i] += (blocks[d] - centroids[i][d])**2
+        distances_square(distances_sq, centroids, *blocks)
         return distances_sq
 
     def _calculate_classes(self, *blocks):
         distances_sq = self._calculate_distances_squared(*blocks)
-        classes = np.argmin(distances_sq, axis=0)
-        return classes
+        return np.argmin(distances_sq, axis=0)
 
     def generate_cluster_centers_random(self, dataframe, rng):
         indices = rng.randint(0, len(dataframe), self.n_clusters)

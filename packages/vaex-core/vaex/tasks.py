@@ -58,8 +58,7 @@ class Task(vaex.promise.Promise):
 
     @classmethod
     def create(cls):
-        ret = Task()
-        return ret
+        return Task()
 
     def create_next(self):
         ret = Task(self.df, [])
@@ -260,7 +259,10 @@ class TaskStatistic(Task):
         if not isinstance(expressions, (tuple, list)):
             expressions = [expressions]
         # edges include everything outside at index 1 and -1, and nan's at index 0, so we add 3 to each dimension
-        self.shape = tuple([k + 3 if edges else k for k in _expand_shape(shape, len(expressions))])
+        self.shape = tuple(
+            k + 3 if edges else k for k in _expand_shape(shape, len(expressions))
+        )
+
         self.limits = limits
         if weight is not None:  # shortcut for weights=[weight]
             assert weights == [], 'only provide weight or weights, not both'

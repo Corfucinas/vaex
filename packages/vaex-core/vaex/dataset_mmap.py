@@ -197,8 +197,9 @@ class DatasetMemoryMapped(DatasetLocal):
     def addRank1(self, name, offset, length, length1, dtype=np.float64, stride=1, stride1=1, filename=None, transposed=False):
         if filename is None:
             filename = self.filename
-        mapping = self.mapping_map[filename]
-        if (not transposed and self._length is not None and length != self._length) or (transposed and self._length is not None and length1 != self._length):
+        if not (transposed or self._length is None or length == self._length) or (
+            transposed and self._length is not None and length1 != self._length
+        ):
             logger.error("inconsistent length", "length of column %s is %d, while %d was expected" % (name, length, self._length))
         else:
             if self.current_slice is None:
@@ -213,6 +214,7 @@ class DatasetMemoryMapped(DatasetLocal):
             rawlength *= stride
             rawlength *= stride1
 
+            mapping = self.mapping_map[filename]
             mmapped_array = np.frombuffer(mapping, dtype=dtype, count=rawlength, offset=offset)
             mmapped_array = mmapped_array.reshape((length1 * stride1, length * stride))
             mmapped_array = mmapped_array[::stride1, ::stride]
@@ -253,12 +255,11 @@ class HansMemoryMapped(DatasetMemoryMapped):
 
         names = "x y z vx vy vz".split()
 
-        if 1:
-            stride = self.formatSize // 8
-            # stride1 = self.numberTimes #*self.formatSize/8
-            for i, name in enumerate(names):
-                # TODO: ask Hans for the self.numberTimes-1
-                self.addRank1(name, offset + 8 * i, length=self.numberParticles + 1, length1=self.numberTimes - 1, dtype=np.float64, stride=stride, stride1=1)
+        stride = self.formatSize // 8
+        # stride1 = self.numberTimes #*self.formatSize/8
+        for i, name in enumerate(names):
+            # TODO: ask Hans for the self.numberTimes-1
+            self.addRank1(name, offset + 8 * i, length=self.numberParticles + 1, length1=self.numberTimes - 1, dtype=np.float64, stride=stride, stride1=1)
 
         if filename_extra is None:
             basename = os.path.basename(filename)
@@ -283,7 +284,6 @@ class HansMemoryMapped(DatasetMemoryMapped):
     @classmethod
     def can_open(cls, path, *args, **kwargs):
         return os.path.splitext(path)[-1] == ".bin"
-        basename, ext = os.path.splitext(path)
         # if os.path.exists(basename + ".omega2"):
         # return True
         # return True
